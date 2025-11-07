@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Sidebar } from "@/components/sidebar"
 import { apiCall } from "@/lib/api"
+import { PAYMENT_PROVIDERS } from "@/constants"
 
 interface PaymentProvider {
   id: string
@@ -15,15 +16,12 @@ interface PaymentProvider {
   created_at: string
 }
 
-const PROVIDERS = [
-  { name: "paystack", label: "Paystack", icon: "🟦", docs: "https://paystack.com/docs" },
-  { name: "flutterwave", label: "Flutterwave", icon: "🌊", docs: "https://developer.flutterwave.com/docs" },
-  { name: "stripe", label: "Stripe", icon: "⬜", docs: "https://stripe.com/docs" },
-  { name: "mono", label: "Mono", icon: "◆", docs: "https://mono.co/docs" },
-  { name: "okra", label: "Okra", icon: "🌿", docs: "https://okra.ng/docs" },
-  { name: "chapa", label: "Chapa", icon: "📱", docs: "https://chapa.co/docs" },
-  { name: "lazerpay", label: "Lazerpay", icon: "⚡", docs: "https://lazerpay.com/docs" },
-]
+const PROVIDERS = PAYMENT_PROVIDERS.map(({ id, name, logoUrl, docsUrl }) => ({
+  id,
+  label: name,
+  logoUrl,
+  docsUrl
+}))
 
 export default function PaymentProvidersPage() {
   const { auth } = useAuth()
@@ -57,7 +55,7 @@ export default function PaymentProvidersPage() {
     setDataLoading(false)
   }
 
-  const handleSaveProvider = async (providerName: string) => {
+  const handleSaveProvider = async (providerId: string) => {
     if (!formData.public_key || !formData.secret_key) {
       alert("Please fill in all fields")
       return
@@ -67,7 +65,7 @@ export default function PaymentProvidersPage() {
     const response = await apiCall("/payment-providers/", {
       method: "POST",
       body: JSON.stringify({
-        provider: providerName,
+        provider: providerId,
         public_key: formData.public_key,
         secret_key: formData.secret_key,
       }),
@@ -110,18 +108,30 @@ export default function PaymentProvidersPage() {
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {PROVIDERS.map((provider) => {
-                    const configured = providers.find((p) => p.provider === provider.name)
-                    const isEditing = editingProvider === provider.name
+                    const configured = providers.find((p) => p.provider === provider.id)
+                    const isEditing = editingProvider === provider.id
 
                     return (
-                      <div key={provider.name} className="bg-card/50 border border-border rounded-lg p-6">
+                      <div key={provider.id} className="bg-card/50 border border-border rounded-lg p-6">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <span className="text-3xl">{provider.icon}</span>
+                            <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                              {provider.logoUrl ? (
+                                <img
+                                  src={provider.logoUrl}
+                                  alt={`${provider.label} logo`}
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <span className="text-sm font-semibold text-muted-foreground">
+                                  {provider.label.charAt(0)}
+                                </span>
+                              )}
+                            </div>
                             <div>
                               <h3 className="font-semibold text-foreground">{provider.label}</h3>
                               {configured && (
-                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                                <span className="text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded">
                                   Configured
                                 </span>
                               )}
@@ -147,7 +157,7 @@ export default function PaymentProvidersPage() {
                             />
                             <div className="flex gap-2">
                               <button
-                                onClick={() => handleSaveProvider(provider.name)}
+                                onClick={() => handleSaveProvider(provider.id)}
                                 disabled={saving}
                                 className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-sm font-semibold transition-colors disabled:opacity-50"
                               >
@@ -174,18 +184,18 @@ export default function PaymentProvidersPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => {
-                                  setEditingProvider(provider.name)
+                                  setEditingProvider(provider.id)
                                   setFormData({ public_key: "", secret_key: "" })
                                 }}
-                                className="flex-1 px-3 py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm font-semibold transition-colors"
+                                className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-sm font-semibold transition-colors"
                               >
                                 {configured ? "Update" : "Add Credentials"}
                               </button>
                               <a
-                                href={provider.docs}
+                                href={provider.docsUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 px-3 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded text-sm font-semibold transition-colors text-center"
+                                className="flex-1 px-3 py-2 bg-muted hover:bg-muted/80 text-foreground rounded text-sm font-semibold transition-colors text-center"
                               >
                                 Docs
                               </a>

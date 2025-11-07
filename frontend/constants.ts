@@ -36,46 +36,46 @@ export const BILLING_PLANS = {
 }
 
 export const PAYMENT_PROVIDERS = [
-  { 
-    id: "paystack", 
-    name: "Paystack", 
-    icon: "🏦",
-    logoUrl: "https://logo.clearbit.com/paystack.com"
+  {
+    id: "paystack",
+    name: "Paystack",
+    logoUrl: "https://logo.clearbit.com/paystack.com",
+    docsUrl: "https://paystack.com/docs"
   },
-  { 
-    id: "flutterwave", 
-    name: "Flutterwave", 
-    icon: "🌊",
-    logoUrl: "https://logo.clearbit.com/flutterwave.com"
+  {
+    id: "flutterwave",
+    name: "Flutterwave",
+    logoUrl: "https://logo.clearbit.com/flutterwave.com",
+    docsUrl: "https://developer.flutterwave.com/docs"
   },
-  { 
-    id: "stripe", 
-    name: "Stripe", 
-    icon: "💳",
-    logoUrl: "https://logo.clearbit.com/stripe.com"
+  {
+    id: "stripe",
+    name: "Stripe",
+    logoUrl: "https://logo.clearbit.com/stripe.com",
+    docsUrl: "https://stripe.com/docs"
   },
-  { 
-    id: "mono", 
-    name: "Mono", 
-    icon: "🔗",
-    logoUrl: "https://logo.clearbit.com/mono.co"
+  {
+    id: "mono",
+    name: "Mono",
+    logoUrl: "https://logo.clearbit.com/mono.co",
+    docsUrl: "https://mono.co/docs"
   },
-  { 
-    id: "okra", 
-    name: "Okra", 
-    icon: "🌾",
-    logoUrl: "https://logo.clearbit.com/okra.ng"
+  {
+    id: "okra",
+    name: "Okra",
+    logoUrl: "https://logo.clearbit.com/okra.ng",
+    docsUrl: "https://okra.ng/docs"
   },
-  { 
-    id: "chapa", 
-    name: "Chapa", 
-    icon: "🇪🇹",
-    logoUrl: "https://logo.clearbit.com/chapa.co"
+  {
+    id: "chapa",
+    name: "Chapa",
+    logoUrl: "https://logo.clearbit.com/chapa.co",
+    docsUrl: "https://chapa.co/docs"
   },
-  { 
-    id: "lazerpay", 
-    name: "Lazerpay", 
-    icon: "⚡",
-    logoUrl: "https://logo.clearbit.com/lazerpay.com"
+  {
+    id: "lazerpay",
+    name: "Lazerpay",
+    logoUrl: "https://logo.clearbit.com/lazerpay.com",
+    docsUrl: "https://lazerpay.com/docs"
   },
 ]

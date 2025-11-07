@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Globe from "@/components/Globe"
 import { PAYMENT_PROVIDERS } from "@/constants"
 
 // Trusted companies using PayBridge
@@ -16,7 +17,13 @@ const TRUSTED_COMPANIES = [
 export default function LandingPage() {
   const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set())
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background relative overflow-hidden">
+      {/* Oversized Globe background spanning across both sides and deeper down the page */}
+      <div aria-hidden className="pointer-events-none absolute top-0 left-1/2 -z-10 transform -translate-x-1/2">
+        <div className="opacity-40" style={{ width: "160vw", maxWidth: "160vw", height: 1500 }}>
+          <Globe className="w-full" height={1500} />
+        </div>
+      </div>
       {/* Navigation */}
       <nav className="flex items-center justify-between p-6 border-b border-border bg-card">
         <h1 className="text-2xl font-bold text-primary">PayBridge</h1>
@@ -25,7 +32,12 @@ export default function LandingPage() {
             <Button variant="outline">Sign In</Button>
           </Link>
           <Link href="/signup">
-            <Button>Get Started</Button>
+            <Button
+              variant="outline"
+              className="bg-transparent text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
+            >
+              Get Started
+            </Button>
           </Link>
         </div>
       </nav>
@@ -38,7 +50,11 @@ export default function LandingPage() {
           Africa.
         </p>
         <Link href="/signup">
-          <Button size="lg" className="mb-20 bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button
+            size="lg"
+            variant="outline"
+            className="mb-20 bg-transparent text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
+          >
             Start Building
           </Button>
         </Link>
@@ -81,14 +97,16 @@ export default function LandingPage() {
               <div key={provider.id} className="bg-card rounded-lg p-6 text-center border border-border hover:border-primary transition-colors">
                 <div className="flex items-center justify-center mb-3 h-16">
                   {showLogo ? (
-                    <img 
-                      src={provider.logoUrl} 
+                    <img
+                      src={provider.logoUrl}
                       alt={`${provider.name} logo`}
                       className="max-h-12 max-w-full object-contain"
                       onError={() => setFailedLogos(prev => new Set(prev).add(provider.id))}
                     />
                   ) : (
-                    <span className="text-4xl">{provider.icon}</span>
+                    <span className="text-lg font-semibold text-muted-foreground">
+                      {provider.name.charAt(0)}
+                    </span>
                   )}
                 </div>
                 <h4 className="text-card-foreground font-semibold">{provider.name}</h4>
