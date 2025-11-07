@@ -4,6 +4,20 @@ from django.core.validators import MinValueValidator
 import uuid
 import secrets
 
+# Common currency choices used across models
+CURRENCY_CHOICES = (
+    ('NGN', 'Nigerian Naira'),
+    ('GHS', 'Ghanaian Cedi'),
+    ('KES', 'Kenyan Shilling'),
+    ('UGX', 'Ugandan Shilling'),
+    ('TZS', 'Tanzanian Shilling'),
+    ('ETB', 'Ethiopian Birr'),
+    ('ZAR', 'South African Rand'),
+    ('USD', 'US Dollar'),
+    ('GBP', 'British Pound'),
+    ('EUR', 'Euro'),
+)
+
 class UserProfile(models.Model):
     COUNTRY_CHOICES = (
         ('NG', 'Nigeria'),
@@ -16,19 +30,6 @@ class UserProfile(models.Model):
         ('US', 'United States'),
         ('GB', 'United Kingdom'),
         ('CA', 'Canada'),
-    )
-    
-    CURRENCY_CHOICES = (
-        ('NGN', 'Nigerian Naira'),
-        ('GHS', 'Ghanaian Cedi'),
-        ('KES', 'Kenyan Shilling'),
-        ('UGX', 'Ugandan Shilling'),
-        ('TZS', 'Tanzanian Shilling'),
-        ('ETB', 'Ethiopian Birr'),
-        ('ZAR', 'South African Rand'),
-        ('USD', 'US Dollar'),
-        ('GBP', 'British Pound'),
-        ('EUR', 'Euro'),
     )
     
     DEVELOPER_TYPE_CHOICES = (
@@ -128,17 +129,6 @@ class Transaction(models.Model):
         ('failed', 'Failed'),
         ('cancelled', 'Cancelled'),
         ('refunded', 'Refunded'),
-    )
-    
-    CURRENCY_CHOICES = (
-        ('NGN', 'Nigerian Naira'),
-        ('GHS', 'Ghanaian Cedi'),
-        ('KES', 'Kenyan Shilling'),
-        ('UGX', 'Ugandan Shilling'),
-        ('TZS', 'Tanzanian Shilling'),
-        ('ETB', 'Ethiopian Birr'),
-        ('ZAR', 'South African Rand'),
-        ('USD', 'US Dollar'),
     )
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

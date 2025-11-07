@@ -1,7 +1,11 @@
+import logging
+from django.db import IntegrityError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -47,9 +51,27 @@ class RegisterView(APIView):
                     'message': 'Account created successfully. Please check your email to verify your account.',
                     'user_id': user.id
                 }, status=status.HTTP_201_CREATED)
-            except Exception:
+                
+            except IntegrityError as e:
+                logger = logging.getLogger(__name__)
+                logger.error(f'Database error during registration: {str(e)}', exc_info=True)
                 return Response(
-                    {'error': 'An error occurred during registration'},
+                    {'error': 'A user with this email or phone number already exists.'},
+                    status=status.HTTP_409_CONFLICT
+                )
+            except (DRFValidationError, DjangoValidationError) as e:
+                # This handles both DRF and Django validation errors
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Validation error during registration: {str(e)}')
+                return Response(
+                    {'error': 'Invalid registration data', 'details': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.error(f'Unexpected error during registration: {str(e)}', exc_info=True)
+                return Response(
+                    {'error': 'An unexpected error occurred during registration. Please try again later.'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         

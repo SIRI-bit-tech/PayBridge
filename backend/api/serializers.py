@@ -44,6 +44,12 @@ class RegistrationSerializer(serializers.Serializer):
     
     def validate_phone_number(self, value):
         try:
+            # Get the country from the request context if available
+            request = self.context.get('request')
+            country = None
+            if request and hasattr(request, 'data') and 'country' in request.data:
+                country = request.data['country']
+            
             # If it's a Nigerian number starting with 234, ensure it's in the correct format
             if value.startswith('234') and len(value) == 13:
                 # Convert to international format for validation
@@ -51,18 +57,31 @@ class RegistrationSerializer(serializers.Serializer):
                 parsed = phonenumbers.parse(intl_format, None)
                 if not phonenumbers.is_valid_number(parsed):
                     raise serializers.ValidationError("Invalid Nigerian phone number format. Please use format: 234XXXXXXXXXX")
-                # Return the original 234 format
-                return value
-                
-            # For other formats, use the original validation
-            parsed = phonenumbers.parse(value, None)
+                # Return E.164 format
+                return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            
+            # For numbers that are all digits but don't start with '+', handle based on country
+            if value.isdigit() and not value.startswith('+'):
+                if country:
+                    # Use the country from the request to parse the number
+                    parsed = phonenumbers.parse(value, country)
+                else:
+                    # If no country provided, assume it's a local number in the default region
+                    parsed = phonenumbers.parse(value, 'US')  # Default to US if no country specified
+            else:
+                # For numbers with '+' or other formats, parse as is
+                parsed = phonenumbers.parse(value, None)
+            
             if not phonenumbers.is_valid_number(parsed):
-                raise serializers.ValidationError("Invalid phone number format. Please use international format: +[country code][number]")
-            # Format as E.164
-            formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-            return formatted
-        except phonenumbers.NumberParseException:
-            raise serializers.ValidationError("Invalid phone number format.")
+                raise serializers.ValidationError(
+                    "Invalid phone number format. Please use international format: +[country code][number]"
+                )
+            
+            # Always return in E.164 format
+            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            
+        except phonenumbers.NumberParseException as e:
+            raise serializers.ValidationError(f"Invalid phone number format: {str(e)}")
     
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
