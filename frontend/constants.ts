@@ -79,3 +79,54 @@ export const PAYMENT_PROVIDERS = [
     docsUrl: "https://lazerpay.com/docs"
   },
 ]
+
+// Country to Currency mapping
+export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  NG: "NGN",
+  GH: "GHS",
+  KE: "KES",
+  UG: "UGX",
+  TZ: "TZS",
+  ET: "ETB",
+  ZA: "ZAR",
+  US: "USD",
+  GB: "GBP",
+  CA: "CAD",
+}
+
+// Country options for signup form
+export const COUNTRIES = [
+  { value: "NG", label: "Nigeria" },
+  { value: "GH", label: "Ghana" },
+  { value: "KE", label: "Kenya" },
+  { value: "UG", label: "Uganda" },
+  { value: "TZ", label: "Tanzania" },
+  { value: "ET", label: "Ethiopia" },
+  { value: "ZA", label: "South Africa" },
+  { value: "US", label: "United States" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "CA", label: "Canada" },
+]
+
+// Currency options for signup form
+export const CURRENCIES = [
+  { value: "NGN", label: "NGN - Nigerian Naira" },
+  { value: "GHS", label: "GHS - Ghanaian Cedi" },
+  { value: "KES", label: "KES - Kenyan Shilling" },
+  { value: "UGX", label: "UGX - Ugandan Shilling" },
+  { value: "TZS", label: "TZS - Tanzanian Shilling" },
+  { value: "ETB", label: "ETB - Ethiopian Birr" },
+  { value: "ZAR", label: "ZAR - South African Rand" },
+  { value: "USD", label: "USD - US Dollar" },
+  { value: "GBP", label: "GBP - British Pound" },
+  { value: "EUR", label: "EUR - Euro" },
+]
+
+// Developer type options for signup form
+export const DEVELOPER_TYPES = [
+  { value: "individual", label: "Individual Developer" },
+  { value: "startup", label: "Startup" },
+  { value: "enterprise", label: "Enterprise" },
+  { value: "agency", label: "Agency" },
+  { value: "other", label: "Other" },
+]

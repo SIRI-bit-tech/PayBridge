@@ -45,7 +45,8 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
 
   const headers = {
     "Content-Type": "application/json",
-    ...options.headers,
+    "Accept": "application/json",
+    ...(options.headers || {})
   } as Record<string, string>
 
   if (token) {
@@ -84,10 +85,31 @@ export async function login(email: string, password: string) {
   })
 }
 
-export async function register(email: string, password: string) {
+export async function register(data: {
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string
+  country: string
+  password: string
+  confirm_password: string
+  company_name?: string
+  developer_type?: string
+  preferred_currency?: string
+  terms_accepted: boolean
+}) {
+  const payload = {
+    ...data,
+    terms_accepted: Boolean(data.terms_accepted)
+  }
+  
   return apiCall("/auth/register/", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
   })
 }
 

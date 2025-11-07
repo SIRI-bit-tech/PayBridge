@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction, 
     Webhook, Subscription, AuditLog, KYCVerification,
     Invoice, UsageMetric, WebhookEvent
 )
+import phonenumbers
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -12,7 +14,96 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ['email', 'company_name', 'country', 'phone_number', 'business_type', 'kyc_verified']
+        fields = ['email', 'company_name', 'country', 'phone_number', 'business_type', 'developer_type', 'preferred_currency', 'kyc_verified']
+
+
+class RegistrationSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150, required=True, source='firstname')
+    last_name = serializers.CharField(max_length=150, required=True, source='lastname')
+    email = serializers.EmailField(required=True)
+    phone_number = serializers.CharField(max_length=20, required=True)
+    country = serializers.CharField(max_length=2, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True, required=True)
+    company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    developer_type = serializers.ChoiceField(choices=UserProfile.DEVELOPER_TYPE_CHOICES, required=False, allow_blank=True)
+    preferred_currency = serializers.ChoiceField(choices=UserProfile.CURRENCY_CHOICES, required=False)
+    terms_accepted = serializers.BooleanField(required=True)
+    
+    def to_internal_value(self, data):
+        # Convert string 'true'/'false' to boolean if needed
+        if 'terms_accepted' in data and isinstance(data['terms_accepted'], str):
+            data = data.copy()
+            data['terms_accepted'] = data['terms_accepted'].lower() == 'true'
+        return super().to_internal_value(data)
+    
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+    
+    def validate_phone_number(self, value):
+        try:
+            # If it's a Nigerian number starting with 234, ensure it's in the correct format
+            if value.startswith('234') and len(value) == 13:
+                # Convert to international format for validation
+                intl_format = f"+{value}"
+                parsed = phonenumbers.parse(intl_format, None)
+                if not phonenumbers.is_valid_number(parsed):
+                    raise serializers.ValidationError("Invalid Nigerian phone number format. Please use format: 234XXXXXXXXXX")
+                # Return the original 234 format
+                return value
+                
+            # For other formats, use the original validation
+            parsed = phonenumbers.parse(value, None)
+            if not phonenumbers.is_valid_number(parsed):
+                raise serializers.ValidationError("Invalid phone number format. Please use international format: +[country code][number]")
+            # Format as E.164
+            formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            return formatted
+        except phonenumbers.NumberParseException:
+            raise serializers.ValidationError("Invalid phone number format.")
+    
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        if not attrs.get('terms_accepted'):
+            raise serializers.ValidationError({"terms_accepted": "You must accept the terms of service."})
+        return attrs
+    
+    def create(self, validated_data):
+        # Remove fields not needed for User creation
+        confirm_password = validated_data.pop('confirm_password')
+        terms_accepted = validated_data.pop('terms_accepted')
+        company_name = validated_data.pop('company_name', '')
+        developer_type = validated_data.pop('developer_type', '')
+        preferred_currency = validated_data.pop('preferred_currency', 'USD')
+        country = validated_data.pop('country')
+        phone_number = validated_data.pop('phone_number')
+        
+        # Create User
+        user = User.objects.create_user(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data.get('firstname', ''),  # Use get with default to avoid KeyError
+            last_name=validated_data.get('lastname', ''),    # Use get with default to avoid KeyError
+            is_active=False  # Require email verification
+        )
+        
+        # Create or update UserProfile
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                'company_name': company_name,
+                'country': country,
+                'phone_number': phone_number,
+                'developer_type': developer_type,
+                'preferred_currency': preferred_currency
+            }
+        )
+        
+        return user
 
 
 class APIKeySerializer(serializers.ModelSerializer):

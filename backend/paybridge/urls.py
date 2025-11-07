@@ -8,6 +8,7 @@ from api.webhook_views import (
     paystack_webhook, flutterwave_webhook, 
     stripe_webhook, chapa_webhook
 )
+from api.views import RegisterView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -39,6 +40,7 @@ urlpatterns = [
     path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     
     # Authentication
+    path('api/v1/auth/register/', RegisterView.as_view(), name='register'),
     path('api/v1/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     

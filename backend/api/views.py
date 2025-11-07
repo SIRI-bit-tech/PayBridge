@@ -21,7 +21,7 @@ from .serializers import (
     UserProfileSerializer, APIKeySerializer, PaymentProviderSerializer,
     TransactionSerializer, WebhookSerializer, SubscriptionSerializer,
     AuditLogSerializer, KYCVerificationSerializer, InvoiceSerializer,
-    UsageMetricSerializer
+    UsageMetricSerializer, RegistrationSerializer
 )
 from .permissions import IsOwner
 from .kyc_service import KYCService
@@ -30,6 +30,33 @@ from .billing_service import BillingService
 from .payment_service import PaymentService
 from .exceptions import KYCVerificationFailed, InvalidAPIKey
 from .tasks import process_transaction_webhook
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = RegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+                # TODO: Send email verification link here
+                return Response({
+                    'message': 'Account created successfully. Please check your email to verify your account.',
+                    'user_id': user.id
+                }, status=status.HTTP_201_CREATED)
+            except Exception:
+                return Response(
+                    {'error': 'An error occurred during registration'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        return Response(
+            {'error': 'Invalid data', 'details': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
