@@ -74,17 +74,17 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-white">Loading...</div>
+  if (loading) return <div className="p-8 text-foreground">Loading...</div>
 
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Settings</h1>
-        <p className="text-neutral-400">Manage your profile and integrations</p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground">Manage your profile and integrations</p>
       </div>
 
       {/* Profile Settings */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>Update your business details</CardDescription>
@@ -94,22 +94,22 @@ export default function SettingsPage() {
             placeholder="Company Name"
             value={formData.company_name}
             onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-            className="bg-neutral-700 border-neutral-600"
+            className="bg-background border-border"
           />
           <Input
             placeholder="Phone Number"
             value={formData.phone_number}
             onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-            className="bg-neutral-700 border-neutral-600"
+            className="bg-background border-border"
           />
           <Input
             placeholder="Business Type"
             value={formData.business_type}
             onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
-            className="bg-neutral-700 border-neutral-600"
+            className="bg-background border-border"
           />
           <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
-            <SelectTrigger className="bg-neutral-700 border-neutral-600">
+            <SelectTrigger className="bg-background border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -127,21 +127,21 @@ export default function SettingsPage() {
       </Card>
 
       {/* Payment Providers */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Payment Providers</CardTitle>
           <CardDescription>Configure your payment provider credentials</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Add Provider */}
-          <div className="border-t border-neutral-700 pt-6">
-            <h3 className="font-semibold text-white mb-4">Add Provider Credentials</h3>
+          <div className="border-t border-border pt-6">
+            <h3 className="font-semibold text-foreground mb-4">Add Provider Credentials</h3>
             <div className="space-y-4">
               <Select
                 value={newProvider.provider}
                 onValueChange={(value) => setNewProvider({ ...newProvider, provider: value })}
               >
-                <SelectTrigger className="bg-neutral-700 border-neutral-600">
+                <SelectTrigger className="bg-background border-border">
                   <SelectValue placeholder="Select Provider" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,16 +156,16 @@ export default function SettingsPage() {
                 placeholder="Public Key"
                 value={newProvider.public_key}
                 onChange={(e) => setNewProvider({ ...newProvider, public_key: e.target.value })}
-                className="bg-neutral-700 border-neutral-600"
+                className="bg-background border-border"
               />
               <Input
                 placeholder="Secret Key"
                 type="password"
                 value={newProvider.secret_key}
                 onChange={(e) => setNewProvider({ ...newProvider, secret_key: e.target.value })}
-                className="bg-neutral-700 border-neutral-600"
+                className="bg-background border-border"
               />
-              <label className="flex items-center gap-2 text-neutral-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-muted-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={newProvider.is_live}
@@ -182,15 +182,15 @@ export default function SettingsPage() {
 
           {/* Active Providers */}
           {providers.length > 0 && (
-            <div className="border-t border-neutral-700 pt-6">
-              <h3 className="font-semibold text-white mb-4">Active Providers</h3>
+            <div className="border-t border-border pt-6">
+              <h3 className="font-semibold text-foreground mb-4">Active Providers</h3>
               <div className="space-y-3">
                 {providers.map((provider) => (
-                  <div key={provider.id} className="bg-neutral-900 rounded p-4 border border-neutral-700">
+                  <div key={provider.id} className="bg-muted rounded p-4 border border-border">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-white capitalize">{provider.provider}</p>
-                        <p className="text-sm text-neutral-400">{provider.is_live ? "Live Mode" : "Test Mode"}</p>
+                        <p className="font-semibold text-foreground capitalize">{provider.provider}</p>
+                        <p className="text-sm text-muted-foreground">{provider.is_live ? "Live Mode" : "Test Mode"}</p>
                       </div>
                       <div
                         className={`px-3 py-1 rounded text-xs font-semibold ${provider.is_active ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}

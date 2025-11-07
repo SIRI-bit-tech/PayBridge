@@ -48,12 +48,12 @@ export default function ApiKeysPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">API Keys</h1>
-        <p className="text-neutral-400">Manage your API keys for authentication</p>
+        <h1 className="text-3xl font-bold text-foreground">API Keys</h1>
+        <p className="text-muted-foreground">Manage your API keys for authentication</p>
       </div>
 
       {/* Create New Key */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Create New API Key</CardTitle>
         </CardHeader>
@@ -63,7 +63,7 @@ export default function ApiKeysPage() {
               placeholder="Key name (e.g., Production, Testing)"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Button onClick={handleCreateKey} disabled={creating || !newKeyName.trim()}>
               {creating ? "Creating..." : "Create Key"}
@@ -73,7 +73,7 @@ export default function ApiKeysPage() {
       </Card>
 
       {/* API Keys List */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Active Keys</CardTitle>
           <CardDescription>
@@ -82,19 +82,19 @@ export default function ApiKeysPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-neutral-400">Loading...</p>
+            <p className="text-muted-foreground">Loading...</p>
           ) : keys.length === 0 ? (
-            <p className="text-neutral-400">No API keys yet. Create one to get started.</p>
+            <p className="text-muted-foreground">No API keys yet. Create one to get started.</p>
           ) : (
             <div className="space-y-4">
               {keys.map((key) => (
                 <div
                   key={key.id}
-                  className="flex items-center justify-between bg-neutral-900 rounded p-4 border border-neutral-700"
+                  className="flex items-center justify-between bg-muted rounded p-4 border border-border"
                 >
                   <div>
-                    <h3 className="font-semibold text-white">{key.name}</h3>
-                    <p className="text-sm text-neutral-400">
+                    <h3 className="font-semibold text-foreground">{key.name}</h3>
+                    <p className="text-sm text-muted-foreground">
                       {key.status} • Created {new Date(key.created_at).toLocaleDateString()}
                     </p>
                     {key.last_used && (

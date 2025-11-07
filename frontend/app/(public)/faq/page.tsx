@@ -48,15 +48,15 @@ export default function FAQPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-b from-neutral-900 to-neutral-950">
+      <section className="relative py-20 bg-gradient-to-b from-card to-background">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <Reveal>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Frequently Asked Questions</h1>
           </Reveal>
           <Reveal delayMs={100}>
-            <p className="text-xl text-neutral-300 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Find answers to common questions about PayBridge and our services.
             </p>
           </Reveal>
@@ -69,7 +69,7 @@ export default function FAQPage() {
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <Reveal key={index} delayMs={index * 50}>
-                <div className="bg-neutral-900/60 rounded-lg overflow-hidden border border-neutral-800">
+                <div className="bg-card/60 rounded-lg overflow-hidden border border-border">
                   <button
                     className="w-full flex items-center justify-between p-6 text-left"
                     onClick={() => toggleFAQ(index)}
@@ -78,7 +78,7 @@ export default function FAQPage() {
                   >
                     <h3 className="text-lg font-medium">{faq.question}</h3>
                     <ChevronDown 
-                      className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${openIndex === index ? 'transform rotate-180' : ''}`} 
+                      className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${openIndex === index ? 'transform rotate-180' : ''}`} 
                     />
                   </button>
                   <div 
@@ -86,7 +86,7 @@ export default function FAQPage() {
                     className={`px-6 pb-6 pt-0 transition-all duration-300 ${openIndex === index ? 'block' : 'hidden'}`}
                     aria-hidden={openIndex !== index}
                   >
-                    <p className="text-neutral-300">{faq.answer}</p>
+                    <p className="text-muted-foreground">{faq.answer}</p>
                   </div>
                 </div>
               </Reveal>
@@ -96,12 +96,12 @@ export default function FAQPage() {
           {/* CTA Section */}
           <div className="mt-16 text-center">
             <Reveal>
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-2xl">
-                <h3 className="text-2xl font-bold mb-4">Still have questions?</h3>
-                <p className="text-neutral-200 mb-6 max-w-2xl mx-auto">
+              <div className="bg-gradient-to-r from-primary to-secondary p-8 rounded-2xl">
+                <h3 className="text-2xl font-bold mb-4 text-primary-foreground">Still have questions?</h3>
+                <p className="text-primary-foreground/90 mb-6 max-w-2xl mx-auto">
                   Our support team is here to help you with any questions you might have about our platform.
                 </p>
-                <Button size="lg" className="bg-white text-neutral-900 hover:bg-neutral-100">
+                <Button size="lg" className="bg-background text-foreground hover:bg-card">
                   Contact Support
                 </Button>
               </div>

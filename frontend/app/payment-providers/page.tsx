@@ -26,7 +26,7 @@ const PROVIDERS = [
 ]
 
 export default function PaymentProvidersPage() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { auth } = useAuth()
   const router = useRouter()
   const [providers, setProviders] = useState<PaymentProvider[]>([])
   const [dataLoading, setDataLoading] = useState(true)
@@ -34,11 +34,13 @@ export default function PaymentProvidersPage() {
   const [formData, setFormData] = useState({ public_key: "", secret_key: "" })
   const [saving, setSaving] = useState(false)
 
+  const isAuthenticated = Boolean(auth)
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, router])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -79,19 +81,15 @@ export default function PaymentProvidersPage() {
     setSaving(false)
   }
 
-  if (isLoading) {
+  if (!isAuthenticated) {
     return (
       <>
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-neutral-400">Loading...</div>
+          <div className="text-muted-foreground">Redirecting...</div>
         </div>
       </>
     )
-  }
-
-  if (!isAuthenticated) {
-    return null
   }
 
   return (
@@ -103,12 +101,12 @@ export default function PaymentProvidersPage() {
           <div className="p-8">
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl font-bold text-white">Payment Providers</h1>
-                <p className="text-neutral-400 mt-2">Configure your payment provider credentials</p>
+                <h1 className="text-3xl font-bold text-foreground">Payment Providers</h1>
+                <p className="text-muted-foreground mt-2">Configure your payment provider credentials</p>
               </div>
 
               {dataLoading ? (
-                <div className="text-center text-neutral-400">Loading providers...</div>
+                <div className="text-center text-muted-foreground">Loading providers...</div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {PROVIDERS.map((provider) => {
@@ -116,12 +114,12 @@ export default function PaymentProvidersPage() {
                     const isEditing = editingProvider === provider.name
 
                     return (
-                      <div key={provider.name} className="bg-neutral-800/50 border border-neutral-700 rounded-lg p-6">
+                      <div key={provider.name} className="bg-card/50 border border-border rounded-lg p-6">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <span className="text-3xl">{provider.icon}</span>
                             <div>
-                              <h3 className="font-semibold text-white">{provider.label}</h3>
+                              <h3 className="font-semibold text-foreground">{provider.label}</h3>
                               {configured && (
                                 <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
                                   Configured
@@ -138,20 +136,20 @@ export default function PaymentProvidersPage() {
                               placeholder="Public Key"
                               value={formData.public_key}
                               onChange={(e) => setFormData({ ...formData, public_key: e.target.value })}
-                              className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded text-white placeholder-neutral-500 text-sm"
+                              className="w-full px-3 py-2 bg-background border border-border rounded text-foreground placeholder-muted-foreground text-sm"
                             />
                             <input
                               type="password"
                               placeholder="Secret Key"
                               value={formData.secret_key}
                               onChange={(e) => setFormData({ ...formData, secret_key: e.target.value })}
-                              className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded text-white placeholder-neutral-500 text-sm"
+                              className="w-full px-3 py-2 bg-background border border-border rounded text-foreground placeholder-muted-foreground text-sm"
                             />
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleSaveProvider(provider.name)}
                                 disabled={saving}
-                                className="flex-1 px-3 py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
+                                className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-sm font-semibold transition-colors disabled:opacity-50"
                               >
                                 {saving ? "Saving..." : "Save"}
                               </button>
@@ -160,7 +158,7 @@ export default function PaymentProvidersPage() {
                                   setEditingProvider(null)
                                   setFormData({ public_key: "", secret_key: "" })
                                 }}
-                                className="flex-1 px-3 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded text-sm font-semibold transition-colors"
+                                className="flex-1 px-3 py-2 bg-muted hover:bg-muted/80 text-foreground rounded text-sm font-semibold transition-colors"
                               >
                                 Cancel
                               </button>
@@ -168,7 +166,7 @@ export default function PaymentProvidersPage() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <p className="text-sm text-neutral-400">
+                            <p className="text-sm text-muted-foreground">
                               {configured
                                 ? "Your credentials are securely stored"
                                 : "Add your API credentials to get started"}

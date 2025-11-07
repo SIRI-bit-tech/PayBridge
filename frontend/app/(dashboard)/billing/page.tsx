@@ -26,7 +26,7 @@ export default function BillingPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Billing & Subscription</h1>
+        <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>
         <p className="text-neutral-400">Manage your subscription and billing</p>
       </div>
 
@@ -40,7 +40,7 @@ export default function BillingPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-neutral-400 text-sm">Plan Name</p>
-                <p className="text-2xl font-bold text-white capitalize">{subscription.plan}</p>
+                <p className="text-2xl font-bold text-foreground capitalize">{subscription.plan}</p>
               </div>
               <div>
                 <p className="text-neutral-400 text-sm">Status</p>
@@ -49,11 +49,11 @@ export default function BillingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-neutral-400 text-sm">Current Period Start</p>
-                  <p className="text-white">{new Date(subscription.current_period_start).toLocaleDateString()}</p>
+                  <p className="text-foreground">{new Date(subscription.current_period_start).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <p className="text-neutral-400 text-sm">Renewal Date</p>
-                  <p className="text-white">{new Date(subscription.renewal_date).toLocaleDateString()}</p>
+                  <p className="text-foreground">{new Date(subscription.renewal_date).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function BillingPage() {
 
       {/* Available Plans */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-4">Available Plans</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Available Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.entries(BILLING_PLANS).map(([key, plan]) => (
             <Card

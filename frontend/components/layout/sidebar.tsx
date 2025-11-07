@@ -17,8 +17,8 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 bg-neutral-800 border-r border-neutral-700 flex flex-col h-screen">
-      <div className="p-6 border-b border-neutral-700">
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col h-screen">
+      <div className="p-6 border-b border-sidebar-border">
         <h1 className="text-2xl font-bold text-primary">PayBridge</h1>
       </div>
       <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
@@ -29,8 +29,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
               pathname.startsWith(link.href.split("/")[1])
-                ? "bg-primary text-white"
-                : "text-neutral-400 hover:bg-neutral-700",
+                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent",
             )}
           >
             <span className="text-xl">{link.icon}</span>

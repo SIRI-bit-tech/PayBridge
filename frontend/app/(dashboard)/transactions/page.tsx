@@ -46,31 +46,31 @@ export default function TransactionsPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Transactions</h1>
+        <h1 className="text-3xl font-bold text-foreground">Transactions</h1>
         <p className="text-neutral-400">View and manage all transactions</p>
       </div>
 
       {/* Filters */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Input
               placeholder="Filter by provider"
               value={filters.provider}
               onChange={(e) => setFilters({ ...filters, provider: e.target.value })}
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Input
               placeholder="Filter by status"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Input
               placeholder="Filter by currency"
               value={filters.currency}
               onChange={(e) => setFilters({ ...filters, currency: e.target.value })}
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Button onClick={fetchTransactions}>Apply Filters</Button>
           </div>
@@ -78,7 +78,7 @@ export default function TransactionsPage() {
       </Card>
 
       {/* Transactions Table */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
         </CardHeader>
@@ -90,7 +90,7 @@ export default function TransactionsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-neutral-700">
+                <thead className="border-b border-border">
                   <tr>
                     <th className="text-left py-3 px-4 text-neutral-400">Reference</th>
                     <th className="text-left py-3 px-4 text-neutral-400">Provider</th>
@@ -101,10 +101,10 @@ export default function TransactionsPage() {
                 </thead>
                 <tbody>
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-neutral-700 hover:bg-neutral-700/50">
-                      <td className="py-3 px-4 text-white font-mono text-xs">{tx.reference}</td>
-                      <td className="py-3 px-4 text-white capitalize">{tx.provider}</td>
-                      <td className="py-3 px-4 text-white">
+                    <tr key={tx.id} className="border-b border-border hover:bg-background/50">
+                      <td className="py-3 px-4 text-foreground font-mono text-xs">{tx.reference}</td>
+                      <td className="py-3 px-4 text-foreground capitalize">{tx.provider}</td>
+                      <td className="py-3 px-4 text-foreground">
                         {tx.amount} {tx.currency}
                       </td>
                       <td className={`py-3 px-4 capitalize font-semibold ${getStatusColor(tx.status)}`}>{tx.status}</td>
