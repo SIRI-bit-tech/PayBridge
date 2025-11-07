@@ -14,7 +14,7 @@ export default function TermsPage() {
           </Reveal>
           <Reveal delayMs={100}>
             <p className="text-xl text-neutral-300">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              Last updated: November 6, 2025
             </p>
           </Reveal>
         </div>

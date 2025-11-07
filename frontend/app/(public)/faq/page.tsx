@@ -107,6 +107,7 @@ export default function FAQPage() {
               </div>
             </Reveal>
           </div>
+        </div>
       </section>
     </main>
   )

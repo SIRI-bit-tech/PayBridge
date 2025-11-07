@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Reveal } from "@/components/Reveal"
 
@@ -35,7 +36,9 @@ export default function AboutPage() {
                   We believe that businesses should focus on growth, not on managing multiple payment integrations. 
                   Our platform handles the complexity so you can focus on what matters most - your customers.
                 </p>
-                <Button className="mt-4">Get Started</Button>
+                <Link href="/signup">
+                  <Button className="mt-4">Get Started</Button>
+                </Link>
               </div>
             </Reveal>
             <Reveal delayMs={100}>
@@ -162,9 +165,11 @@ export default function AboutPage() {
             </p>
           </Reveal>
           <Reveal delayMs={200}>
-            <Button size="lg" className="bg-white text-neutral-900 hover:bg-neutral-100">
-              Get Started Today
-            </Button>
+            <Link href="/signup">
+              <Button size="lg" className="bg-white text-neutral-900 hover:bg-neutral-100">
+                Get Started Today
+              </Button>
+            </Link>
           </Reveal>
         </div>
       </section>
