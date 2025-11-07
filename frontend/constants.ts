@@ -120,6 +120,7 @@ export const CURRENCIES = [
   { value: "USD", label: "USD - US Dollar" },
   { value: "GBP", label: "GBP - British Pound" },
   { value: "EUR", label: "EUR - Euro" },
+  { value: "CAD", label: "CAD - Canadian Dollar" },
 ]
 
 // Developer type options for signup form
