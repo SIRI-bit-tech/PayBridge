@@ -13,6 +13,30 @@ class UserProfile(models.Model):
         ('TZ', 'Tanzania'),
         ('ET', 'Ethiopia'),
         ('ZA', 'South Africa'),
+        ('US', 'United States'),
+        ('GB', 'United Kingdom'),
+        ('CA', 'Canada'),
+    )
+    
+    CURRENCY_CHOICES = (
+        ('NGN', 'Nigerian Naira'),
+        ('GHS', 'Ghanaian Cedi'),
+        ('KES', 'Kenyan Shilling'),
+        ('UGX', 'Ugandan Shilling'),
+        ('TZS', 'Tanzanian Shilling'),
+        ('ETB', 'Ethiopian Birr'),
+        ('ZAR', 'South African Rand'),
+        ('USD', 'US Dollar'),
+        ('GBP', 'British Pound'),
+        ('EUR', 'Euro'),
+    )
+    
+    DEVELOPER_TYPE_CHOICES = (
+        ('individual', 'Individual Developer'),
+        ('startup', 'Startup'),
+        ('enterprise', 'Enterprise'),
+        ('agency', 'Agency'),
+        ('other', 'Other'),
     )
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -20,6 +44,8 @@ class UserProfile(models.Model):
     country = models.CharField(max_length=2, choices=COUNTRY_CHOICES, default='NG')
     phone_number = models.CharField(max_length=20, blank=True)
     business_type = models.CharField(max_length=100, blank=True)
+    developer_type = models.CharField(max_length=20, choices=DEVELOPER_TYPE_CHOICES, blank=True)
+    preferred_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
     kyc_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

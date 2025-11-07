@@ -31,3 +31,4 @@ numpy
 pandas
 django-db-connection-pool
 django-cachalot
+phonenumbers
