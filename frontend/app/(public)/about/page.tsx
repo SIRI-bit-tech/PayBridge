@@ -3,6 +3,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Reveal } from "@/components/Reveal"
+import {
+  Globe2,
+  Lightbulb,
+  Handshake,
+  Heart,
+  Star,
+  UsersRound,
+  ShieldCheck
+} from "lucide-react"
 
 export default function AboutPage() {
   return (
@@ -44,7 +53,7 @@ export default function AboutPage() {
             <Reveal delayMs={100}>
               <div className="bg-card/50 p-8 rounded-xl border border-border h-full flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-6xl mb-4">🌍</div>
+                  <Globe2 className="mx-auto h-16 w-16 text-primary mb-4" />
                   <p className="text-muted-foreground">Connecting Africa through seamless payments</p>
                 </div>
               </div>
@@ -70,42 +79,45 @@ export default function AboutPage() {
               {
                 title: "Innovation",
                 description: "We constantly push boundaries to deliver cutting-edge payment solutions that drive business growth.",
-                icon: "💡"
+                icon: Lightbulb
               },
               {
                 title: "Integrity",
                 description: "We build trust through transparency, security, and ethical business practices.",
-                icon: "🤝"
+                icon: Handshake
               },
               {
                 title: "Customer Focus",
                 description: "Our customers are at the heart of everything we do. We listen, adapt, and deliver exceptional value.",
-                icon: "❤️"
+                icon: Heart
               },
               {
                 title: "Excellence",
                 description: "We strive for excellence in every aspect of our service, from technology to customer support.",
-                icon: "🌟"
+                icon: Star
               },
               {
                 title: "Collaboration",
                 description: "We believe in the power of partnerships to create better solutions for our clients.",
-                icon: "🌍"
+                icon: UsersRound
               },
               {
                 title: "Reliability",
                 description: "Businesses depend on us, so we ensure our platform is always available and performing at its best.",
-                icon: "🔒"
+                icon: ShieldCheck
               }
-            ].map((value, index) => (
-              <Reveal key={index} delayMs={index * 50}>
-                <div className="bg-card/30 p-6 rounded-xl border border-border hover:border-primary transition-colors">
-                  <div className="text-3xl mb-4">{value.icon}</div>
-                  <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-                  <p className="text-muted-foreground">{value.description}</p>
-                </div>
-              </Reveal>
-            ))}
+            ].map((value, index) => {
+              const Icon = value.icon
+              return (
+                <Reveal key={index} delayMs={index * 50}>
+                  <div className="bg-card/30 p-6 rounded-xl border border-border hover:border-primary transition-colors">
+                    <Icon className="h-8 w-8 text-primary mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
+                    <p className="text-muted-foreground">{value.description}</p>
+                  </div>
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -140,8 +152,13 @@ export default function AboutPage() {
             ].map((member, index) => (
               <Reveal key={index} delayMs={index * 100}>
                 <div className="text-center bg-card/50 p-8 rounded-xl border border-border">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center text-4xl">
-                    {member.name.split(' ').map(n => n[0]).join('')}
+                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-4xl font-semibold text-primary">
+                      {member.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </span>
                   </div>
                   <h3 className="text-xl font-semibold">{member.name}</h3>
                   <p className="text-primary mb-4">{member.role}</p>

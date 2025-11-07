@@ -17,6 +17,7 @@ import {
 import { graphQLQuery } from "@/lib/api"
 import { WebSocketClient } from "@/lib/websocket"
 import type { Analytics } from "@/types"
+import { CheckCircle2 } from "lucide-react"
 
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
@@ -84,7 +85,12 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">Real-time payment analytics and insights</p>
-        {wsConnected && <p className="text-xs text-secondary mt-2">🟢 Real-time connection active</p>}
+        {wsConnected && (
+          <div className="flex items-center gap-2 text-xs text-secondary mt-2">
+            <CheckCircle2 className="h-3 w-3" />
+            <span>Real-time connection active</span>
+          </div>
+        )}
       </div>
 
       {/* Key Metrics */}

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Facebook, Twitter, Linkedin, Instagram, Github } from "lucide-react"
+import { Facebook, Twitter, Linkedin, Instagram, Github, Heart } from "lucide-react"
 
 const footerLinks = {
   product: [
@@ -151,7 +151,9 @@ export function Footer() {
               PayBridge is a registered trademark of PayBridge, Inc. All other trademarks are the property of their respective owners.
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Made with ❤️ in Africa for the world.
+              <span className="inline-flex items-center gap-1">
+                Made with <Heart className="h-3 w-3 text-red-500" aria-hidden="true" /> in Africa for the world.
+              </span>
             </p>
           </div>
         </div>

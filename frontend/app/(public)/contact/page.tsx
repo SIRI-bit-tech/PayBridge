@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Reveal } from "@/components/Reveal"
-import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react"
+import { Mail, Phone, MapPin, Send, CheckCircle, Twitter, Linkedin, Github, Facebook, Instagram } from "lucide-react"
+
+const SOCIAL_LINKS = [
+  { name: "Twitter", icon: Twitter, href: "#" },
+  { name: "LinkedIn", icon: Linkedin, href: "#" },
+  { name: "GitHub", icon: Github, href: "#" },
+  { name: "Facebook", icon: Facebook, href: "#" },
+  { name: "Instagram", icon: Instagram, href: "#" }
+] as const
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -215,20 +223,14 @@ export default function ContactPage() {
                 <div className="pt-6 border-t border-border">
                   <h3 className="font-medium mb-4">Follow Us</h3>
                   <div className="flex space-x-4">
-                    {[
-                      { name: 'Twitter', icon: '🐦' },
-                      { name: 'LinkedIn', icon: '💼' },
-                      { name: 'GitHub', icon: '💻' },
-                      { name: 'Facebook', icon: '👍' },
-                      { name: 'Instagram', icon: '📷' }
-                    ].map((social, index) => (
-                      <a 
-                        key={index} 
-                        href="#" 
+                    {SOCIAL_LINKS.map(({ name, href, icon: Icon }) => (
+                      <a
+                        key={name}
+                        href={href}
                         className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-muted transition-colors"
-                        aria-label={social.name}
+                        aria-label={name}
                       >
-                        <span className="text-lg">{social.icon}</span>
+                        <Icon className="h-5 w-5" />
                       </a>
                     ))}
                   </div>

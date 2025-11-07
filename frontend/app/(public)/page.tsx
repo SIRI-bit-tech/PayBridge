@@ -81,14 +81,16 @@ export default function LandingPage() {
               <div key={provider.id} className="bg-card rounded-lg p-6 text-center border border-border hover:border-primary transition-colors">
                 <div className="flex items-center justify-center mb-3 h-16">
                   {showLogo ? (
-                    <img 
-                      src={provider.logoUrl} 
+                    <img
+                      src={provider.logoUrl}
                       alt={`${provider.name} logo`}
                       className="max-h-12 max-w-full object-contain"
                       onError={() => setFailedLogos(prev => new Set(prev).add(provider.id))}
                     />
                   ) : (
-                    <span className="text-4xl">{provider.icon}</span>
+                    <span className="text-lg font-semibold text-muted-foreground">
+                      {provider.name.charAt(0)}
+                    </span>
                   )}
                 </div>
                 <h4 className="text-card-foreground font-semibold">{provider.name}</h4>
