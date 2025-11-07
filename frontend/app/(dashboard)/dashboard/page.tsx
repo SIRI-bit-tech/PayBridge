@@ -75,50 +75,50 @@ export default function DashboardPage() {
   }, [])
 
   if (!analytics) {
-    return <div className="p-8 text-white">Loading analytics...</div>
+    return <div className="p-8 text-foreground">Loading analytics...</div>
   }
 
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-neutral-400">Real-time payment analytics and insights</p>
-        {wsConnected && <p className="text-xs text-green-400 mt-2">🟢 Real-time connection active</p>}
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground">Real-time payment analytics and insights</p>
+        {wsConnected && <p className="text-xs text-secondary mt-2">🟢 Real-time connection active</p>}
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-neutral-400">Total Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{analytics.total_transactions}</div>
+            <div className="text-2xl font-bold text-foreground">{analytics.total_transactions}</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-neutral-400">Total Volume</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Volume</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">₦{Number(analytics.total_volume).toLocaleString()}</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-neutral-400">Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Success Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-400">{analytics.success_rate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-secondary">{analytics.success_rate.toFixed(1)}%</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-neutral-400">Avg Transaction</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Transaction</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
@@ -131,7 +131,7 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Volume Chart */}
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle>Daily Volume (Last 30 Days)</CardTitle>
           </CardHeader>
@@ -140,22 +140,22 @@ export default function DashboardPage() {
               <AreaChart data={analytics.daily_volume || []}>
                 <defs>
                   <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#007BFF" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#007BFF" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151" }} />
-                <Area type="monotone" dataKey="volume" stroke="#007BFF" fillOpacity={1} fill="url(#colorVolume)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                <Area type="monotone" dataKey="volume" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorVolume)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Transactions by Provider */}
-        <Card className="bg-neutral-800 border-neutral-700">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle>Transactions by Provider</CardTitle>
           </CardHeader>
@@ -168,12 +168,12 @@ export default function DashboardPage() {
                   volume: (data as any).volume,
                 }))}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="provider" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="provider" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
                 <Legend />
-                <Bar dataKey="count" fill="#007BFF" />
+                <Bar dataKey="count" fill="hsl(var(--primary))" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -181,15 +181,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Status Distribution */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Transactions by Status</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {Object.entries(analytics.transactions_by_status || {}).map(([status, count]) => (
-              <div key={status} className="bg-neutral-900 rounded p-4">
-                <p className="text-neutral-400 text-sm capitalize">{status}</p>
+              <div key={status} className="bg-muted rounded p-4">
+                <p className="text-muted-foreground text-sm capitalize">{status}</p>
                 <p className="text-2xl font-bold text-primary mt-2">{count}</p>
               </div>
             ))}

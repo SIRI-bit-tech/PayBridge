@@ -36,11 +36,46 @@ export const BILLING_PLANS = {
 }
 
 export const PAYMENT_PROVIDERS = [
-  { id: "paystack", name: "Paystack", icon: "🏦" },
-  { id: "flutterwave", name: "Flutterwave", icon: "🌊" },
-  { id: "stripe", name: "Stripe", icon: "💳" },
-  { id: "mono", name: "Mono", icon: "🔗" },
-  { id: "okra", name: "Okra", icon: "🌾" },
-  { id: "chapa", name: "Chapa", icon: "🇪🇹" },
-  { id: "lazerpay", name: "Lazerpay", icon: "⚡" },
+  { 
+    id: "paystack", 
+    name: "Paystack", 
+    icon: "🏦",
+    logoUrl: "https://logo.clearbit.com/paystack.com"
+  },
+  { 
+    id: "flutterwave", 
+    name: "Flutterwave", 
+    icon: "🌊",
+    logoUrl: "https://logo.clearbit.com/flutterwave.com"
+  },
+  { 
+    id: "stripe", 
+    name: "Stripe", 
+    icon: "💳",
+    logoUrl: "https://logo.clearbit.com/stripe.com"
+  },
+  { 
+    id: "mono", 
+    name: "Mono", 
+    icon: "🔗",
+    logoUrl: "https://logo.clearbit.com/mono.co"
+  },
+  { 
+    id: "okra", 
+    name: "Okra", 
+    icon: "🌾",
+    logoUrl: "https://logo.clearbit.com/okra.ng"
+  },
+  { 
+    id: "chapa", 
+    name: "Chapa", 
+    icon: "🇪🇹",
+    logoUrl: "https://logo.clearbit.com/chapa.co"
+  },
+  { 
+    id: "lazerpay", 
+    name: "Lazerpay", 
+    icon: "⚡",
+    logoUrl: "https://logo.clearbit.com/lazerpay.com"
+  },
 ]

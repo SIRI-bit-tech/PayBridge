@@ -20,14 +20,14 @@ export function Sidebar() {
   ]
 
   return (
-    <aside className="w-64 border-r border-neutral-800 bg-neutral-900/50 h-screen sticky top-16 hidden md:block">
+    <aside className="w-64 border-r border-border bg-card/50 h-screen sticky top-16 hidden md:block">
       <nav className="p-4 space-y-2">
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-              isActive(link.href) ? "bg-primary text-white" : "text-neutral-400 hover:bg-neutral-800"
+              isActive(link.href) ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
           >
             <span>{link.icon}</span>

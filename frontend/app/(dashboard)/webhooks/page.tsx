@@ -59,12 +59,12 @@ export default function WebhooksPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Webhooks</h1>
+        <h1 className="text-3xl font-bold text-foreground">Webhooks</h1>
         <p className="text-neutral-400">Receive real-time payment events</p>
       </div>
 
       {/* Create Webhook */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Create Webhook Endpoint</CardTitle>
           <CardDescription>Subscribe to payment and KYC events</CardDescription>
@@ -75,11 +75,11 @@ export default function WebhooksPage() {
             placeholder="https://example.com/webhooks/paybridge"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="bg-neutral-700 border-neutral-600"
+            className="bg-background border-border"
           />
 
           <div>
-            <label className="text-white text-sm font-medium mb-2 block">Subscribe to events:</label>
+            <label className="text-foreground text-sm font-medium mb-2 block">Subscribe to events:</label>
             <div className="grid grid-cols-2 gap-3">
               {events.map((event) => (
                 <label key={event} className="flex items-center gap-2 text-neutral-300 cursor-pointer">
@@ -108,7 +108,7 @@ export default function WebhooksPage() {
       </Card>
 
       {/* Webhooks List */}
-      <Card className="bg-neutral-800 border-neutral-700">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Active Webhooks</CardTitle>
           <CardDescription>
@@ -123,7 +123,7 @@ export default function WebhooksPage() {
           ) : (
             <div className="space-y-4">
               {webhooks.map((webhook) => (
-                <div key={webhook.id} className="bg-neutral-900 rounded p-4 border border-neutral-700">
+                <div key={webhook.id} className="bg-muted rounded p-4 border border-border">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-mono text-sm text-primary break-all">{webhook.url}</h3>

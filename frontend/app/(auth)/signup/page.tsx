@@ -39,8 +39,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 px-4">
-      <Card className="w-full max-w-md bg-neutral-800 border-neutral-700">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-card to-background px-4">
+      <Card className="w-full max-w-md bg-card border-border">
         <CardHeader>
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>Join PayBridge today</CardDescription>
@@ -48,7 +48,7 @@ export default function SignupPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded px-3 py-2 text-sm">
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded px-3 py-2 text-sm">
                 {error}
               </div>
             )}
@@ -58,7 +58,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Input
               type="password"
@@ -66,7 +66,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Input
               type="password"
@@ -74,15 +74,15 @@ export default function SignupPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-neutral-700 border-neutral-600"
+              className="bg-background border-border"
             />
             <Button disabled={loading} className="w-full">
               {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
-          <p className="text-center text-neutral-400 text-sm mt-4">
+          <p className="text-center text-muted-foreground text-sm mt-4">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:text-primary-light">
+            <Link href="/login" className="text-primary hover:underline">
               Sign in
             </Link>
           </p>

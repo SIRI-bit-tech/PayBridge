@@ -144,14 +144,14 @@ export function PaymentForm({
   }
 
   return (
-    <Card className="w-full max-w-md bg-neutral-800 border-neutral-700">
+    <Card className="w-full max-w-md bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-white">Make Payment</CardTitle>
+        <CardTitle className="text-foreground">Make Payment</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Amount Display */}
-        <div className="bg-neutral-700 p-4 rounded-lg">
-          <p className="text-neutral-400 text-sm">Amount</p>
+        <div className="bg-muted p-4 rounded-lg">
+          <p className="text-muted-foreground text-sm">Amount</p>
           <p className="text-3xl font-bold text-primary">
             {amount.toLocaleString()} {currency}
           </p>

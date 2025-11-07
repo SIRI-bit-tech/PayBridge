@@ -16,10 +16,10 @@ export function Navbar() {
   }
 
   return (
-    <header className="h-16 bg-neutral-800 border-b border-neutral-700 flex items-center justify-between px-8">
+    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8">
       <div>
-        <p className="text-sm text-neutral-400">Welcome,</p>
-        <p className="font-semibold text-white">{auth?.user?.email}</p>
+        <p className="text-sm text-muted-foreground">Welcome,</p>
+        <p className="font-semibold text-foreground">{auth?.user?.email}</p>
       </div>
       <Button variant="outline" onClick={handleLogout}>
         Logout

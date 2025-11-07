@@ -6,15 +6,15 @@ import { Reveal } from "@/components/Reveal"
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-b from-neutral-900 to-neutral-950">
+      <section className="relative py-20 bg-gradient-to-b from-card to-background">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <Reveal>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">About PayBridge</h1>
           </Reveal>
           <Reveal delayMs={100}>
-            <p className="text-xl text-neutral-300 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Empowering businesses across Africa with seamless payment solutions
             </p>
           </Reveal>
@@ -28,11 +28,11 @@ export default function AboutPage() {
             <Reveal>
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold">Our Mission</h2>
-                <p className="text-lg text-neutral-300">
+                <p className="text-lg text-muted-foreground">
                   At PayBridge, we're on a mission to simplify payments across Africa by providing a unified 
                   platform that connects businesses with multiple payment providers through a single integration.
                 </p>
-                <p className="text-neutral-300">
+                <p className="text-muted-foreground">
                   We believe that businesses should focus on growth, not on managing multiple payment integrations. 
                   Our platform handles the complexity so you can focus on what matters most - your customers.
                 </p>
@@ -42,10 +42,10 @@ export default function AboutPage() {
               </div>
             </Reveal>
             <Reveal delayMs={100}>
-              <div className="bg-neutral-900/50 p-8 rounded-xl border border-neutral-800 h-full flex items-center justify-center">
+              <div className="bg-card/50 p-8 rounded-xl border border-border h-full flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl mb-4">🌍</div>
-                  <p className="text-neutral-300">Connecting Africa through seamless payments</p>
+                  <p className="text-muted-foreground">Connecting Africa through seamless payments</p>
                 </div>
               </div>
             </Reveal>
@@ -54,12 +54,12 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-16 bg-neutral-900/50">
+      <section className="py-16 bg-card/50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <Reveal>
               <h2 className="text-3xl font-bold mb-4">Our Core Values</h2>
-              <p className="text-neutral-300 max-w-2xl mx-auto">
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 These principles guide everything we do at PayBridge
               </p>
             </Reveal>
@@ -99,10 +99,10 @@ export default function AboutPage() {
               }
             ].map((value, index) => (
               <Reveal key={index} delayMs={index * 50}>
-                <div className="bg-neutral-800/30 p-6 rounded-xl border border-neutral-800 hover:border-blue-600 transition-colors">
+                <div className="bg-card/30 p-6 rounded-xl border border-border hover:border-primary transition-colors">
                   <div className="text-3xl mb-4">{value.icon}</div>
                   <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-                  <p className="text-neutral-300">{value.description}</p>
+                  <p className="text-muted-foreground">{value.description}</p>
                 </div>
               </Reveal>
             ))}
@@ -115,7 +115,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-6">
           <Reveal className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Meet Our Leadership</h2>
-            <p className="text-neutral-300 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               The passionate team driving PayBridge's vision forward
             </p>
           </Reveal>
@@ -139,13 +139,13 @@ export default function AboutPage() {
               }
             ].map((member, index) => (
               <Reveal key={index} delayMs={index * 100}>
-                <div className="text-center bg-neutral-900/50 p-8 rounded-xl border border-neutral-800">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-neutral-800 flex items-center justify-center text-4xl">
+                <div className="text-center bg-card/50 p-8 rounded-xl border border-border">
+                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center text-4xl">
                     {member.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <h3 className="text-xl font-semibold">{member.name}</h3>
-                  <p className="text-blue-400 mb-4">{member.role}</p>
-                  <p className="text-neutral-300 text-sm">{member.bio}</p>
+                  <p className="text-primary mb-4">{member.role}</p>
+                  <p className="text-muted-foreground text-sm">{member.bio}</p>
                 </div>
               </Reveal>
             ))}
@@ -154,19 +154,19 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
+      <section className="py-20 bg-gradient-to-r from-primary to-secondary">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <Reveal>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to transform your payment infrastructure?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-primary-foreground">Ready to transform your payment infrastructure?</h2>
           </Reveal>
           <Reveal delayMs={100}>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
               Join thousands of businesses that trust PayBridge for their payment processing needs.
             </p>
           </Reveal>
           <Reveal delayMs={200}>
             <Link href="/signup">
-              <Button size="lg" className="bg-white text-neutral-900 hover:bg-neutral-100">
+              <Button size="lg" className="bg-background text-foreground hover:bg-card">
                 Get Started Today
               </Button>
             </Link>
