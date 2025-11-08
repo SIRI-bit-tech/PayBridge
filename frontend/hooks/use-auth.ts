@@ -1,14 +1,4 @@
-"use client"
+// Re-exporting useAuth from the auth provider for backward compatibility
+import { useAuth as useAuthInternal } from '@/components/auth-provider';
 
-import { useContext } from "react"
-
-// Re-export the context for hook usage
-const AuthContextValue = (global as any).AuthContext
-
-export const useAuth = () => {
-  const context = useContext(AuthContextValue)
-  if (!context) {
-    return { auth: null, setAuth: () => {}, clearAuth: () => {} }
-  }
-  return context
-}
+export const useAuth = useAuthInternal;
