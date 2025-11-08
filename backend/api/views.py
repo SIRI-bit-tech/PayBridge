@@ -36,6 +36,79 @@ from .exceptions import KYCVerificationFailed, InvalidAPIKey
 from .tasks import process_transaction_webhook
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+import logging
+
+User = get_user_model()
+logger = logging.getLogger(__name__)
+
+
+class LoginView(TokenObtainPairView):
+    """
+    Custom login view that supports both email and phone number login
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        identifier = request.data.get('email') or request.data.get('phone_number')
+        password = request.data.get('password')
+        remember_me = request.data.get('remember_me', False)
+
+        if not identifier or not password:
+            return Response(
+                {'error': 'Email/Phone and password are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Find user by email or phone
+        user = None
+        if '@' in identifier:
+            try:
+                user = User.objects.get(email=identifier)
+            except User.DoesNotExist:
+                pass
+        else:
+            try:
+                # Assuming phone_number is stored in the User model
+                user = User.objects.get(phone_number=identifier)
+            except (User.DoesNotExist, User.MultipleObjectsReturned):
+                pass
+
+        if not user or not user.check_password(password):
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        
+        # Set token expiration based on remember_me
+        if remember_me:
+            refresh.set_exp(lifetime=timezone.timedelta(days=30))
+        
+        return Response({
+            'access': str(access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'phone_number': user.profile.phone_number if hasattr(user, 'profile') else '',
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            }
+        })
 
 
 class RegisterView(APIView):
@@ -46,29 +119,28 @@ class RegisterView(APIView):
         if serializer.is_valid():
             try:
                 user = serializer.save()
-                # TODO: Send email verification link here
+                
+                # Send email verification link
+                self._send_verification_email(user)
+                
                 return Response({
                     'message': 'Account created successfully. Please check your email to verify your account.',
                     'user_id': user.id
                 }, status=status.HTTP_201_CREATED)
                 
             except IntegrityError as e:
-                logger = logging.getLogger(__name__)
                 logger.error(f'Database error during registration: {str(e)}', exc_info=True)
                 return Response(
                     {'error': 'A user with this email or phone number already exists.'},
                     status=status.HTTP_409_CONFLICT
                 )
             except (DRFValidationError, DjangoValidationError) as e:
-                # This handles both DRF and Django validation errors
-                logger = logging.getLogger(__name__)
                 logger.warning(f'Validation error during registration: {str(e)}')
                 return Response(
                     {'error': 'Invalid registration data', 'details': str(e)},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             except Exception as e:
-                logger = logging.getLogger(__name__)
                 logger.error(f'Unexpected error during registration: {str(e)}', exc_info=True)
                 return Response(
                     {'error': 'An unexpected error occurred during registration. Please try again later.'},
@@ -79,6 +151,132 @@ class RegisterView(APIView):
             {'error': 'Invalid data', 'details': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+    def _send_verification_email(self, user):
+        """Send verification email to the user"""
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        subject = 'Verify your email address'
+        context = {
+            'user': user,
+            'uid': uid,
+            'token': token,
+            'domain': settings.FRONTEND_URL,
+        }
+        
+        message = render_to_string('emails/email_verification.html', context)
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f'Failed to send verification email: {str(e)}', exc_info=True)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email_or_phone = request.data.get('email_or_phone')
+        if not email_or_phone:
+            return Response(
+                {'error': 'Email or phone number is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Try to find user by email or phone
+            if '@' in email_or_phone:
+                user = User.objects.get(email=email_or_phone)
+            else:
+                user = User.objects.get(phone_number=email_or_phone)
+            
+            self._send_password_reset_email(user)
+            
+            return Response({
+                'message': 'Password reset link has been sent to your email/phone if it exists in our system.'
+            })
+            
+        except User.DoesNotExist:
+            # Don't reveal that the user doesn't exist
+            return Response({
+                'message': 'If your email/phone exists in our system, you will receive a password reset link.'
+            })
+    
+    def _send_password_reset_email(self, user):
+        """Send password reset email to the user"""
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        subject = 'Password Reset Request'
+        context = {
+            'user': user,
+            'uid': uid,
+            'token': token,
+            'domain': settings.FRONTEND_URL,
+        }
+        
+        message = render_to_string('emails/password_reset_email.html', context)
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f'Failed to send password reset email: {str(e)}', exc_info=True)
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        
+        if not all([uid, token, new_password]):
+            return Response(
+                {'error': 'Missing required fields'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Decode the uid to get the user
+            user_id = force_text(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+            
+            # Verify the token
+            if not default_token_generator.check_token(user, token):
+                return Response(
+                    {'error': 'Invalid or expired token'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Set the new password
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({
+                'message': 'Password has been reset successfully.'
+            })
+            
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {'error': 'Invalid user or token'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):

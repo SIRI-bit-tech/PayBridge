@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction, 
     Webhook, Subscription, AuditLog, KYCVerification,
-    Invoice, UsageMetric, WebhookEvent
+    Invoice, UsageMetric, WebhookEvent, CURRENCY_CHOICES
 )
 import phonenumbers
 
@@ -27,7 +27,7 @@ class RegistrationSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(write_only=True, required=True)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     developer_type = serializers.ChoiceField(choices=UserProfile.DEVELOPER_TYPE_CHOICES, required=False, allow_blank=True)
-    preferred_currency = serializers.ChoiceField(choices=UserProfile.CURRENCY_CHOICES, required=False)
+    preferred_currency = serializers.ChoiceField(choices=CURRENCY_CHOICES, required=False)
     terms_accepted = serializers.BooleanField(required=True)
     
     def to_internal_value(self, data):

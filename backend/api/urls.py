@@ -1,9 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     UserProfileViewSet, APIKeyViewSet, PaymentProviderViewSet,
     TransactionViewSet, WebhookViewSet, SubscriptionViewSet,
-    KYCViewSet, AnalyticsViewSet, BillingViewSet, AuditLogViewSet
+    KYCViewSet, AnalyticsViewSet, BillingViewSet, AuditLogViewSet,
+    LoginView, RegisterView, PasswordResetRequestView, PasswordResetConfirmView
 )
 
 router = DefaultRouter()
@@ -18,6 +20,16 @@ router.register(r'analytics', AnalyticsViewSet, basename='analytics')
 router.register(r'billing', BillingViewSet, basename='billing')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 
+# Authentication URLs
+auth_patterns = [
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/password/reset/', PasswordResetRequestView.as_view(), name='password_reset'),
+    path('auth/password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+]
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include(auth_patterns)),
 ]

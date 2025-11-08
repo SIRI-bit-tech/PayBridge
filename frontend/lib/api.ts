@@ -58,6 +58,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
       fetch(url, {
         ...options,
         headers,
+        credentials: options.credentials || 'include',
       }),
     )
 
@@ -78,11 +79,37 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
   }
 }
 
-export async function login(email: string, password: string) {
-  return apiCall("/auth/token/", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  })
+export interface LoginCredentials {
+  email?: string;
+  phone_number?: string;
+  password: string;
+  remember_me?: boolean;
+}
+
+export async function login(credentials: LoginCredentials) {
+  return apiCall('/auth/login/', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+    credentials: 'include', // Important for cookies
+  });
+}
+
+export async function requestPasswordReset(emailOrPhone: string) {
+  return apiCall('/auth/password/reset/', {
+    method: 'POST',
+    body: JSON.stringify({ email_or_phone: emailOrPhone }),
+  });
+}
+
+export async function resetPassword(uid: string, token: string, newPassword: string) {
+  return apiCall('/auth/password/reset/confirm/', {
+    method: 'POST',
+    body: JSON.stringify({
+      uid,
+      token,
+      new_password: newPassword,
+    }),
+  });
 }
 
 export async function register(data: {
