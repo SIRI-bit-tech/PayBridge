@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'graphene_django',
     'channels',
+    'rest_framework_simplejwt.token_blacklist',
     'api',
 ]
 
@@ -188,7 +189,6 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
