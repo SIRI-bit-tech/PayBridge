@@ -94,8 +94,8 @@ class LoginView(TokenObtainPairView):
         
         if remember_me:
             # Set expiration to 30 days for both tokens when remember_me is True
-            refresh['exp'] = timezone.now() + timedelta(days=30)
-            access_token['exp'] = timezone.now() + timedelta(days=30)
+            refresh.set_exp(lifetime=timedelta(days=30))
+            access_token.set_exp(lifetime=timedelta(days=30))
         
         return Response({
             'access': str(access_token),
