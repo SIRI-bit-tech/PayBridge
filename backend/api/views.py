@@ -38,16 +38,13 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
-import logging
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -79,9 +76,10 @@ class LoginView(TokenObtainPairView):
                 pass
         else:
             try:
-                # Assuming phone_number is stored in the User model
-                user = User.objects.get(phone_number=identifier)
-            except (User.DoesNotExist, User.MultipleObjectsReturned):
+                # Look up user by phone number through UserProfile
+                profile = UserProfile.objects.get(phone_number=identifier)
+                user = profile.user
+            except (UserProfile.DoesNotExist, UserProfile.MultipleObjectsReturned):
                 pass
 
         if not user or not user.check_password(password):
@@ -90,13 +88,14 @@ class LoginView(TokenObtainPairView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Generate tokens
+        # Generate tokens with expiration based on remember_me
         refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
+        access_token = refresh.access_token
         
-        # Set token expiration based on remember_me
         if remember_me:
-            refresh.set_exp(lifetime=timezone.timedelta(days=30))
+            # Set expiration to 30 days for both tokens when remember_me is True
+            refresh['exp'] = timezone.now() + timezone.timedelta(days=30)
+            access_token['exp'] = timezone.now() + timezone.timedelta(days=30)
         
         return Response({
             'access': str(access_token),
@@ -196,16 +195,24 @@ class PasswordResetRequestView(APIView):
             if '@' in email_or_phone:
                 user = User.objects.get(email=email_or_phone)
             else:
-                user = User.objects.get(phone_number=email_or_phone)
+                # Look up user by phone number through UserProfile
+                profile = UserProfile.objects.get(phone_number=email_or_phone)
+                user = profile.user
             
             self._send_password_reset_email(user)
             
             return Response({
-                'message': 'Password reset link has been sent to your email/phone if it exists in our system.'
+                'message': 'If your email/phone exists in our system, you will receive a password reset link.'
             })
             
-        except User.DoesNotExist:
+        except (User.DoesNotExist, UserProfile.DoesNotExist):
             # Don't reveal that the user doesn't exist
+            return Response({
+                'message': 'If your email/phone exists in our system, you will receive a password reset link.'
+            })
+            
+        except (User.MultipleObjectsReturned, UserProfile.MultipleObjectsReturned):
+            # Handle case where multiple users are found (shouldn't happen with proper constraints)
             return Response({
                 'message': 'If your email/phone exists in our system, you will receive a password reset link.'
             })
@@ -254,7 +261,7 @@ class PasswordResetConfirmView(APIView):
         
         try:
             # Decode the uid to get the user
-            user_id = force_text(urlsafe_base64_decode(uid))
+            user_id = force_str(urlsafe_base64_decode(uid))
             user = User.objects.get(pk=user_id)
             
             # Verify the token
