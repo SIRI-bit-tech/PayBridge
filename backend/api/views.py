@@ -119,11 +119,11 @@ class RegisterView(APIView):
             try:
                 user = serializer.save()
                 
-                # Send email verification link
-                self._send_verification_email(user)
+                # Email verification disabled for now - will be added later
+                # self._send_verification_email(user)
                 
                 return Response({
-                    'message': 'Account created successfully. Please check your email to verify your account.',
+                    'message': 'Account created successfully. You can now login.',
                     'user_id': user.id
                 }, status=status.HTTP_201_CREATED)
                 
@@ -646,6 +646,85 @@ class KYCViewSet(viewsets.ViewSet):
 class AnalyticsViewSet(viewsets.ViewSet):
     """Analytics endpoints"""
     permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """Get dashboard analytics - same format as GraphQL"""
+        from django.db.models import Sum, Count, Avg
+        from datetime import datetime, timedelta
+        from decimal import Decimal
+        
+        user = request.user
+        
+        # Total transactions
+        total_transactions = Transaction.objects.filter(user=user).count()
+        
+        # Total volume (completed only)
+        total_volume_result = Transaction.objects.filter(
+            user=user, status='completed'
+        ).aggregate(total=Sum('amount'))
+        total_volume = float(total_volume_result['total'] or Decimal('0'))
+        
+        # Success rate
+        if total_transactions > 0:
+            successful = Transaction.objects.filter(user=user, status='completed').count()
+            success_rate = (successful / total_transactions) * 100
+        else:
+            success_rate = 0.0
+        
+        # Average transaction size
+        avg_result = Transaction.objects.filter(
+            user=user, status='completed'
+        ).aggregate(avg=Avg('amount'))
+        average_transaction_size = float(avg_result['avg'] or Decimal('0'))
+        
+        # Transactions by provider
+        providers = Transaction.objects.filter(user=user).values('provider').annotate(
+            count=Count('id'),
+            volume=Sum('amount')
+        )
+        transactions_by_provider = {
+            p['provider']: {
+                'count': p['count'],
+                'volume': float(p['volume'] or 0)
+            }
+            for p in providers
+        }
+        
+        # Transactions by status
+        statuses = Transaction.objects.filter(user=user).values('status').annotate(
+            count=Count('id')
+        )
+        transactions_by_status = {s['status']: s['count'] for s in statuses}
+        
+        # Daily volume (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        daily_data = Transaction.objects.filter(
+            user=user,
+            created_at__gte=thirty_days_ago
+        ).values('created_at__date').annotate(
+            volume=Sum('amount'),
+            count=Count('id')
+        ).order_by('created_at__date')
+        
+        daily_volume = [
+            {
+                'date': str(d['created_at__date']),
+                'volume': float(d['volume'] or 0),
+                'count': d['count']
+            }
+            for d in daily_data
+        ]
+        
+        return Response({
+            'total_transactions': total_transactions,
+            'total_volume': total_volume,
+            'success_rate': success_rate,
+            'average_transaction_size': average_transaction_size,
+            'transactions_by_provider': transactions_by_provider,
+            'transactions_by_status': transactions_by_status,
+            'daily_volume': daily_volume
+        })
     
     @action(detail=False, methods=['get'])
     def transactions(self, request):

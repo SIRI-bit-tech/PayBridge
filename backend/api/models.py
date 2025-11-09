@@ -415,3 +415,35 @@ class WebhookEvent(models.Model):
     
     def __str__(self):
         return f"{self.webhook.url} - {self.event_type}"
+
+
+class Settlement(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    )
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='settlements')
+    amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(0)])
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='NGN')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    bank_account = models.CharField(max_length=255, blank=True)
+    reference = models.CharField(max_length=100, unique=True, blank=True)
+    failure_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'settlements'
+        ordering = ['-created_at']
+    
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            self.reference = f"STL-{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.amount} {self.currency}"

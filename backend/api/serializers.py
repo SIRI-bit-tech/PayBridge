@@ -107,7 +107,7 @@ class RegistrationSerializer(serializers.Serializer):
             password=validated_data['password'],
             first_name=validated_data.get('firstname', ''),  # Use get with default to avoid KeyError
             last_name=validated_data.get('lastname', ''),    # Use get with default to avoid KeyError
-            is_active=False  # Require email verification
+            is_active=True  # Auto-activate users (email verification optional)
         )
         
         # Create or update UserProfile

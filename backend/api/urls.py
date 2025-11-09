@@ -7,6 +7,8 @@ from .views import (
     KYCViewSet, AnalyticsViewSet, BillingViewSet, AuditLogViewSet,
     LoginView, RegisterView, PasswordResetRequestView, PasswordResetConfirmView
 )
+from .settlement_views import SettlementViewSet
+from .analytics_views import AnalyticsViewSet as SystemAnalyticsViewSet
 
 router = DefaultRouter()
 router.register(r'profile', UserProfileViewSet, basename='profile')
@@ -19,6 +21,8 @@ router.register(r'kyc', KYCViewSet, basename='kyc')
 router.register(r'analytics', AnalyticsViewSet, basename='analytics')
 router.register(r'billing', BillingViewSet, basename='billing')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
+router.register(r'settlements', SettlementViewSet, basename='settlement')
+router.register(r'system-analytics', SystemAnalyticsViewSet, basename='system-analytics')
 
 # Authentication URLs
 auth_patterns = [

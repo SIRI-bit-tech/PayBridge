@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from api.graphql_view import AuthenticatedGraphQLView
 from api.webhook_views import (
     paystack_webhook, flutterwave_webhook, 
     stripe_webhook, chapa_webhook
@@ -38,6 +39,9 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    
+    # GraphQL endpoint
+    path('api/v1/graphql/', AuthenticatedGraphQLView.as_view(graphiql=True), name='graphql'),
     
     # Authentication
     path('api/v1/auth/register/', RegisterView.as_view(), name='register'),
