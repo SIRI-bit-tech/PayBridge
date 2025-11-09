@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Q
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from datetime import timedelta
 from decimal import Decimal
 from .models import Transaction, Settlement
@@ -21,19 +22,21 @@ class SettlementViewSet(viewsets.ViewSet):
         """Get current balance and settlement information"""
         user = request.user
         
-        # Calculate available balance (completed transactions older than 7 days)
+        # Calculate available balance (completed transactions older than 7 days, not yet settled)
         seven_days_ago = timezone.now() - timedelta(days=7)
         available_txns = Transaction.objects.filter(
             user=user,
             status='completed',
-            created_at__lte=seven_days_ago
+            created_at__lte=seven_days_ago,
+            settlement__isnull=True  # Exclude already-settled transactions
         ).aggregate(total=Sum('net_amount'))
         
-        # Calculate pending balance (completed transactions within last 7 days)
+        # Calculate pending balance (completed transactions within last 7 days, not yet settled)
         pending_txns = Transaction.objects.filter(
             user=user,
             status='completed',
-            created_at__gt=seven_days_ago
+            created_at__gt=seven_days_ago,
+            settlement__isnull=True  # Exclude already-settled transactions
         ).aggregate(total=Sum('net_amount'))
         
         # Get last settlement
@@ -63,15 +66,18 @@ class SettlementViewSet(viewsets.ViewSet):
         """Initiate a withdrawal/settlement"""
         user = request.user
         
-        # Calculate available balance
+        # Get unsettled transactions older than 7 days
         seven_days_ago = timezone.now() - timedelta(days=7)
-        available_txns = Transaction.objects.filter(
+        available_txns_qs = Transaction.objects.filter(
             user=user,
             status='completed',
-            created_at__lte=seven_days_ago
-        ).aggregate(total=Sum('net_amount'))
+            created_at__lte=seven_days_ago,
+            settlement__isnull=True  # Only unsettled transactions
+        )
         
-        available_balance = available_txns['total'] or Decimal('0')
+        # Calculate available balance
+        available_balance_result = available_txns_qs.aggregate(total=Sum('net_amount'))
+        available_balance = available_balance_result['total'] or Decimal('0')
         
         if available_balance <= 0:
             return Response(
@@ -79,24 +85,36 @@ class SettlementViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Safely get bank account from user profile
+        bank_account = None
+        try:
+            if hasattr(user, 'profile'):
+                bank_account = user.profile.bank_account
+        except ObjectDoesNotExist:
+            bank_account = None
+        
         # Create settlement record
         settlement = Settlement.objects.create(
             user=user,
             amount=available_balance,
             currency='NGN',
             status='pending',
-            bank_account=user.profile.bank_account if hasattr(user, 'profile') else None
+            bank_account=bank_account
         )
+        
+        # Mark all included transactions as settled
+        transactions_updated = available_txns_qs.update(settlement=settlement)
         
         # In production, this would trigger actual bank transfer
         # For now, we'll mark it as processing
-        logger.info(f"Settlement initiated for user {user.email}: {available_balance}")
+        logger.info(f"Settlement initiated for user {user.email}: {available_balance} ({transactions_updated} transactions)")
         
         return Response({
             'id': str(settlement.id),
             'amount': float(settlement.amount),
             'currency': settlement.currency,
             'status': settlement.status,
+            'transactions_count': transactions_updated,
             'message': 'Withdrawal initiated successfully. Funds will be transferred within 1-2 business days.'
         })
     

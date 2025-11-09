@@ -146,6 +146,7 @@ class Transaction(models.Model):
     fee = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     net_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     provider_response = models.JSONField(default=dict, blank=True)
+    settlement = models.ForeignKey('Settlement', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     idempotency_key = models.CharField(max_length=255, unique=True, null=True, blank=True, db_index=True)
