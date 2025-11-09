@@ -134,7 +134,9 @@ export function UserSummary() {
           </Avatar>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">
-              {profile.first_name} {profile.last_name}
+              {profile.first_name && profile.last_name 
+                ? `${profile.first_name} ${profile.last_name}`
+                : profile.email.split('@')[0]}
             </h3>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
           </div>
