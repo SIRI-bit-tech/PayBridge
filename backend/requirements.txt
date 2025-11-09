@@ -25,6 +25,7 @@ graphe
 graphene-django
 channels
 channels-redis
+daphne
 django-filter
 scikit-learn
 numpy

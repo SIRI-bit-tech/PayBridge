@@ -91,7 +91,7 @@ export function PaymentForm({
     setStatus("retry_pending")
     setRetryCount(retryCount + 1)
 
-    console.log(`[v0] Scheduling retry in ${delayMs}ms (attempt ${retryCount + 1})`)
+    console.log(`Scheduling retry in ${delayMs}ms (attempt ${retryCount + 1})`)
 
     retryTimeoutRef.current = setTimeout(async () => {
       try {

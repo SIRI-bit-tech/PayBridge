@@ -15,7 +15,7 @@ export class WebSocketClient {
         this.ws = new WebSocket(`${WS_BASE_URL}${path}`)
 
         this.ws.onopen = () => {
-          console.log("[v0] WebSocket connected")
+          console.log("WebSocket connected")
           this.reconnectAttempts = 0
           resolve()
         }
@@ -25,17 +25,17 @@ export class WebSocketClient {
             const data = JSON.parse(event.data)
             this.emit(data.type, data)
           } catch (e) {
-            console.error("[v0] WebSocket message parse error:", e)
+            console.error("WebSocket message parse error:", e)
           }
         }
 
         this.ws.onerror = (error) => {
-          console.error("[v0] WebSocket error:", error)
+          console.error("WebSocket error:", error)
           reject(error)
         }
 
         this.ws.onclose = () => {
-          console.log("[v0] WebSocket closed, attempting reconnect...")
+          console.log("WebSocket closed, attempting reconnect...")
           this.attemptReconnect(path)
         }
       } catch (error) {

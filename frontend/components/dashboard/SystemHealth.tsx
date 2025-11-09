@@ -25,7 +25,7 @@ export function SystemHealth() {
   }, [])
 
   const fetchMetrics = async () => {
-    const response = await apiCall<SystemMetrics>("/analytics/system-health/")
+    const response = await apiCall<SystemMetrics>("/system-analytics/system-health/")
     if (response.data) {
       setMetrics(response.data)
     }

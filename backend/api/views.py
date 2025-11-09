@@ -54,6 +54,7 @@ class LoginView(TokenObtainPairView):
     """
     Custom login view that supports both email and phone number login
     """
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -111,6 +112,7 @@ class LoginView(TokenObtainPairView):
 
 
 class RegisterView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -180,6 +182,7 @@ class RegisterView(APIView):
 
 
 class PasswordResetRequestView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -246,6 +249,7 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     
     def post(self, request):

@@ -11,23 +11,72 @@ class DashboardConsumer(AsyncWebsocketConsumer):
     """Real-time dashboard updates via WebSocket"""
     
     async def connect(self):
-        """Initialize WebSocket connection"""
-        self.user = self.scope["user"]
+        """Initialize WebSocket connection with JWT authentication"""
+        logger.info("WebSocket connection attempt started")
         
-        if not self.user.is_authenticated:
-            await self.close()
+        # Get token from query string
+        query_string = self.scope.get('query_string', b'').decode()
+        logger.info(f"Query string: {query_string}")
+        
+        token = None
+        for param in query_string.split('&'):
+            if param.startswith('token='):
+                token = param.split('=')[1]
+                break
+        
+        if not token:
+            logger.warning("WebSocket connection rejected: No token provided")
+            await self.close(code=4001)
+            return
+        
+        logger.info(f"Token found: {token[:20]}...")
+        
+        # Validate JWT token
+        try:
+            from rest_framework_simplejwt.tokens import AccessToken
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            logger.info(f"Token validated for user_id: {user_id}")
+            
+            # Get user from database
+            self.user = await self.get_user(user_id)
+            
+            if not self.user:
+                logger.warning(f"WebSocket connection rejected: User {user_id} not found")
+                await self.close(code=4004)
+                return
+            
+            logger.info(f"User found: {self.user.email}")
+                
+        except Exception as e:
+            logger.error(f"WebSocket connection rejected: Invalid token - {str(e)}", exc_info=True)
+            await self.close(code=4003)
             return
         
         self.room_group_name = f"dashboard_{self.user.id}"
         
         # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        try:
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
+            logger.info(f"Added to channel group: {self.room_group_name}")
+        except Exception as e:
+            logger.error(f"Failed to add to channel group: {str(e)}", exc_info=True)
+            await self.close(code=4005)
+            return
         
         await self.accept()
-        logger.info(f"User {self.user.email} connected to dashboard")
+        logger.info(f"User {self.user.email} connected to dashboard via WebSocket successfully")
+    
+    @database_sync_to_async
+    def get_user(self, user_id):
+        """Get user from database"""
+        try:
+            return User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return None
     
     async def disconnect(self, close_code):
         """Handle disconnection"""
