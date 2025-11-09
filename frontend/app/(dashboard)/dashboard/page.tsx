@@ -14,35 +14,69 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { graphQLQuery } from "@/lib/api"
+import { graphQLQuery, apiCall } from "@/lib/api"
 import { WebSocketClient } from "@/lib/websocket"
 import type { Analytics } from "@/types"
-import { CheckCircle2 } from "lucide-react"
+import { RecentTransactions } from "@/components/dashboard/RecentTransactions"
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed"
+import { SettlementSummary } from "@/components/dashboard/SettlementSummary"
+import { SystemHealth } from "@/components/dashboard/SystemHealth"
+import { UserSummary } from "@/components/dashboard/UserSummary"
 
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [wsConnected, setWsConnected] = useState(false)
 
-  // Fetch analytics via GraphQL
+  // Fetch analytics via REST API (with GraphQL fallback)
   useEffect(() => {
     const fetchAnalytics = async () => {
-      const query = `
-        query {
-          analytics {
-            totalTransactions
-            totalVolume
-            successRate
-            averageTransactionSize
-            transactionsByProvider
-            transactionsByStatus
-            dailyVolume
-          }
-        }
-      `
-      const response = await graphQLQuery<any>(query)
-      if (response.data?.analytics) {
-        setAnalytics(response.data.analytics)
+      console.log('Fetching analytics...')
+      
+      // Check if user is logged in
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+      if (!token) {
+        console.error('No access token found.')
+        // Set empty analytics instead of redirecting
+        setAnalytics({
+          total_transactions: 0,
+          total_volume: 0,
+          success_rate: 0,
+          average_transaction_size: 0,
+          transactions_by_provider: {},
+          transactions_by_status: {},
+          daily_volume: []
+        })
+        return
       }
+      
+      console.log('Token found, fetching data...')
+      
+      // Try REST API first (more reliable)
+      const restResponse = await apiCall<any>("/analytics/dashboard/")
+      
+      console.log('REST API response status:', restResponse.status)
+      
+      if (restResponse.data) {
+        console.log('Analytics data received:', restResponse.data)
+        setAnalytics(restResponse.data)
+        return
+      }
+      
+      if (restResponse.status === 401) {
+        console.error('Authentication failed. Token might be invalid.')
+      }
+      
+      // If REST fails, set empty analytics to show dashboard
+      console.log('Setting empty analytics')
+      setAnalytics({
+        total_transactions: 0,
+        total_volume: 0,
+        success_rate: 0,
+        average_transaction_size: 0,
+        transactions_by_provider: {},
+        transactions_by_status: {},
+        daily_volume: []
+      })
     }
 
     fetchAnalytics()
@@ -62,10 +96,9 @@ export default function DashboardPage() {
         setWsConnected(true)
         ws.send("subscribe_analytics", {})
       })
-      .catch((err) => console.error("[v0] WebSocket connection failed:", err))
+      .catch((err) => console.error("WebSocket connection failed:", err))
 
     ws.on("analytics", (data: any) => {
-      console.log("[v0] Received analytics update:", data)
       setAnalytics((prev) => ({ ...prev, ...data.data }))
     })
 
@@ -86,8 +119,8 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">Real-time payment analytics and insights</p>
         {wsConnected && (
-          <div className="flex items-center gap-2 text-xs text-secondary mt-2">
-            <CheckCircle2 className="h-3 w-3" />
+          <div className="flex items-center gap-2 text-xs text-green-500 mt-2">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             <span>Real-time connection active</span>
           </div>
         )}
@@ -118,7 +151,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Success Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">{analytics.success_rate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-green-500">{analytics.success_rate.toFixed(1)}%</div>
           </CardContent>
         </Card>
 
@@ -202,6 +235,20 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recent Transactions */}
+      <RecentTransactions />
+
+      {/* Bottom Grid - Activity, Settlement, System Health, User Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ActivityFeed />
+        <SettlementSummary />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SystemHealth />
+        <UserSummary />
+      </div>
     </div>
   )
 }

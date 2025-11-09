@@ -71,7 +71,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
     def send_analytics(self):
         """Get and send current analytics"""
         from api.models import Transaction
-        from django.db.models import Sum, Count, Avg
+        from django.db.models import Sum, Count, Avg, Q
         
         stats = Transaction.objects.filter(
             user=self.user
@@ -79,7 +79,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             total_transactions=Count('id'),
             total_volume=Sum('amount'),
             avg_transaction=Avg('amount'),
-            successful=Count('id', filter=models.Q(status='completed'))
+            successful=Count('id', filter=Q(status='completed'))
         )
         
         return stats

@@ -1,6 +1,5 @@
 import graphene
 from graphene_django import DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
 from django.db.models import Q, Sum, Count
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -127,9 +126,11 @@ class Query(graphene.ObjectType):
     """GraphQL Query root for multi-provider unified access"""
     
     # Transactions
-    transactions = DjangoFilterConnectionField(
+    transactions = graphene.List(
         TransactionType,
-        filterset_fields=['status', 'provider', 'currency']
+        status=graphene.String(),
+        provider=graphene.String(),
+        currency=graphene.String()
     )
     transaction = graphene.Field(TransactionType, reference=graphene.String())
     
@@ -155,11 +156,22 @@ class Query(graphene.ObjectType):
     invoices = graphene.List(InvoiceType)
     invoice = graphene.Field(InvoiceType, id=graphene.String())
     
-    def resolve_transactions(self, info, **kwargs):
+    def resolve_transactions(self, info, status=None, provider=None, currency=None, **kwargs):
         user = info.context.user
         if not user.is_authenticated:
             return Transaction.objects.none()
-        return Transaction.objects.filter(user=user)
+        
+        queryset = Transaction.objects.filter(user=user)
+        
+        # Apply filters if provided
+        if status:
+            queryset = queryset.filter(status=status)
+        if provider:
+            queryset = queryset.filter(provider=provider)
+        if currency:
+            queryset = queryset.filter(currency=currency)
+        
+        return queryset.order_by('-created_at')[:20]  # Limit to 20 results
     
     def resolve_transaction(self, info, reference):
         user = info.context.user

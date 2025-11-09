@@ -268,6 +268,7 @@ export async function graphQLQuery<T>(query: string, variables?: Record<string, 
 }
 
 export async function getAnalytics(): Promise<ApiResponse<Analytics>> {
+  // Try GraphQL first
   const query = `
     query {
       analytics {
@@ -281,7 +282,28 @@ export async function getAnalytics(): Promise<ApiResponse<Analytics>> {
       }
     }
   `
-  return graphQLQuery<Analytics>(query)
+  
+  const graphqlResponse = await graphQLQuery<any>(query)
+  
+  // If GraphQL works, return it
+  if (graphqlResponse.data?.analytics) {
+    return {
+      data: graphqlResponse.data.analytics,
+      status: graphqlResponse.status
+    }
+  }
+  
+  // Fallback to REST API
+  const restResponse = await apiCall<any>("/analytics/dashboard/")
+  
+  if (restResponse.data) {
+    return {
+      data: restResponse.data,
+      status: restResponse.status
+    }
+  }
+  
+  return graphqlResponse // Return original error
 }
 
 export async function getTransactionsAdvanced(filters?: {
