@@ -14,8 +14,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { graphQLQuery, apiCall } from "@/lib/api"
-import { WebSocketClient } from "@/lib/websocket"
+import { apiCall } from "@/lib/api"
+import { useWebSocket } from "@/hooks/useWebSocket"
 import type { Analytics } from "@/types"
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions"
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed"
@@ -86,27 +86,32 @@ export default function DashboardPage() {
   }, [])
 
   // Real-time WebSocket updates
+  const wsUrl = typeof window !== "undefined" 
+    ? `ws://localhost:8000/ws/dashboard/`
+    : ""
+  
+  const { isConnected, lastMessage } = useWebSocket(wsUrl)
+
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
-    if (!token) return
+    setWsConnected(isConnected)
+  }, [isConnected])
 
-    const ws = new WebSocketClient(token)
-    ws.connect("/ws/dashboard/")
-      .then(() => {
-        setWsConnected(true)
-        ws.send("subscribe_analytics", {})
-      })
-      .catch((err) => console.error("WebSocket connection failed:", err))
-
-    ws.on("analytics", (data: any) => {
-      setAnalytics((prev) => ({ ...prev, ...data.data }))
-    })
-
-    return () => {
-      ws.disconnect()
-      setWsConnected(false)
+  useEffect(() => {
+    if (lastMessage) {
+      if (lastMessage.type === 'analytics') {
+        setAnalytics((prev) => prev ? { ...prev, ...lastMessage.data } : lastMessage.data)
+      } else if (lastMessage.type === 'transaction_update') {
+        // Refresh analytics when transaction updates
+        const fetchAnalytics = async () => {
+          const restResponse = await apiCall<any>("/analytics/dashboard/")
+          if (restResponse.data) {
+            setAnalytics(restResponse.data)
+          }
+        }
+        fetchAnalytics()
+      }
     }
-  }, [])
+  }, [lastMessage])
 
   if (!analytics) {
     return <div className="p-8 text-foreground">Loading analytics...</div>

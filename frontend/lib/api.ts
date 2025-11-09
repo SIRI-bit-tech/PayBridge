@@ -41,7 +41,7 @@ function generateIdempotentKey(): string {
 
 export async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL_ENV}${endpoint}`
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+  let token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
 
   const headers = {
     "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
   }
 
   try {
-    const response = await retryWithBackoff(() =>
+    let response = await retryWithBackoff(() =>
       fetch(url, {
         ...options,
         headers,
@@ -62,16 +62,37 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
       }),
     )
 
+    // If 401 and we have a refresh token, try to refresh
+    if (response.status === 401 && typeof window !== "undefined") {
+      const newToken = await refreshToken();
+      if (newToken) {
+        headers["Authorization"] = `Bearer ${newToken}`;
+        response = await fetch(url, {
+          ...options,
+          headers,
+          credentials: options.credentials || 'include',
+        });
+      } else {
+        // Refresh failed, redirect to login
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        if (typeof window !== "undefined" && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return { error: "Session expired", status: 401 };
+      }
+    }
+
     const data = await response.json()
 
     if (response.ok) {
       return { data, status: response.status }
     } else {
-      return { error: data.detail || "An error occurred", status: response.status }
+      return { error: data.detail || data.error || "An error occurred", status: response.status }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Network error"
-    console.log("[v0] API call failed:", errorMessage)
+    console.log(" API call failed:", errorMessage)
     return {
       error: errorMessage,
       status: 0,
@@ -87,11 +108,48 @@ export interface LoginCredentials {
 }
 
 export async function login(credentials: LoginCredentials) {
-  return apiCall('/auth/login/', {
+  const response = await apiCall<{ access: string; refresh: string; user: any }>('/auth/login/', {
     method: 'POST',
     body: JSON.stringify(credentials),
-    credentials: 'include', // Important for cookies
+    credentials: 'include',
   });
+  
+  // Store tokens in localStorage
+  if (response.data) {
+    localStorage.setItem('access_token', response.data.access);
+    localStorage.setItem('refresh_token', response.data.refresh);
+  }
+  
+  return response;
+}
+
+export async function refreshToken(): Promise<string | null> {
+  const refresh = localStorage.getItem('refresh_token');
+  if (!refresh) return null;
+  
+  try {
+    const response = await fetch(`${API_BASE_URL_ENV}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('access_token', data.access);
+      return data.access;
+    }
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+  }
+  
+  return null;
+}
+
+export async function logout() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  return { data: { message: 'Logged out successfully' }, status: 200 };
 }
 
 export async function requestPasswordReset(emailOrPhone: string) {

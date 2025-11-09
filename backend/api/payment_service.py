@@ -20,7 +20,7 @@ class PaymentService:
         NEVER saves card details. Uses payment method tokens only.
         """
         try:
-            logger.info(f"[v0] Creating tokenized payment for {customer_email}, amount: {amount}")
+            logger.info(f"Creating tokenized payment for {customer_email}, amount: {amount}")
             
             # Create payment intent without storing payment method
             payment_intent = self.stripe_client.PaymentIntent.create(
@@ -36,7 +36,7 @@ class PaymentService:
                 capture_method='automatic',  # Auto-capture on success
             )
             
-            logger.info(f"[v0] Payment intent created: {payment_intent.id}")
+            logger.info(f"Payment intent created: {payment_intent.id}")
             
             return {
                 'success': True,
@@ -47,7 +47,7 @@ class PaymentService:
                 'status': payment_intent.status,
             }
         except self.stripe_client.error.CardError as e:
-            logger.error(f"[v0] Card error: {e.user_message}")
+            logger.error(f"Card error: {e.user_message}")
             return {
                 'success': False,
                 'error': e.user_message,
@@ -55,7 +55,7 @@ class PaymentService:
                 'retry': True,
             }
         except self.stripe_client.error.RateLimitError as e:
-            logger.error(f"[v0] Rate limit exceeded")
+            logger.error(f"Rate limit exceeded")
             return {
                 'success': False,
                 'error': 'Too many requests. Please try again later.',
@@ -63,21 +63,21 @@ class PaymentService:
                 'retry_after': 60,
             }
         except self.stripe_client.error.InvalidRequestError as e:
-            logger.error(f"[v0] Invalid request: {str(e)}")
+            logger.error(f"Invalid request: {str(e)}")
             return {
                 'success': False,
                 'error': str(e),
                 'retry': False,
             }
         except self.stripe_client.error.AuthenticationError as e:
-            logger.error(f"[v0] Authentication failed")
+            logger.error(f"Authentication failed")
             return {
                 'success': False,
                 'error': 'Payment provider authentication failed',
                 'retry': True,
             }
         except self.stripe_client.error.APIConnectionError as e:
-            logger.error(f"[v0] Network error connecting to Stripe: {str(e)}")
+            logger.error(f"Network error connecting to Stripe: {str(e)}")
             return {
                 'success': False,
                 'error': 'Network connection failed. Please check your internet and retry.',
@@ -85,7 +85,7 @@ class PaymentService:
                 'retry_after': 5,
             }
         except Exception as e:
-            logger.error(f"[v0] Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error: {str(e)}")
             return {
                 'success': False,
                 'error': 'An unexpected error occurred. Please try again.',
@@ -95,7 +95,7 @@ class PaymentService:
     def confirm_payment_intent(self, payment_intent_id, payment_method_id=None):
         """Confirm a payment intent"""
         try:
-            logger.info(f"[v0] Confirming payment intent: {payment_intent_id}")
+            logger.info(f"Confirming payment intent: {payment_intent_id}")
             
             params = {'payment_method': payment_method_id} if payment_method_id else {}
             
@@ -104,7 +104,7 @@ class PaymentService:
                 **params
             )
             
-            logger.info(f"[v0] Payment intent confirmed with status: {intent.status}")
+            logger.info(f"Payment intent confirmed with status: {intent.status}")
             
             return {
                 'success': intent.status in ['succeeded', 'processing'],
@@ -112,7 +112,7 @@ class PaymentService:
                 'payment_intent': intent,
             }
         except Exception as e:
-            logger.error(f"[v0] Error confirming payment: {str(e)}")
+            logger.error(f"Error confirming payment: {str(e)}")
             return {
                 'success': False,
                 'error': str(e),
@@ -126,7 +126,7 @@ class PaymentService:
         """
         try:
             event_type = event['type']
-            logger.info(f"[v0] Processing webhook event: {event_type}")
+            logger.info(f"Processing webhook event: {event_type}")
             
             if event_type == 'payment_intent.succeeded':
                 return self._handle_payment_succeeded(event['data']['object'], idempotency_key)
@@ -135,10 +135,10 @@ class PaymentService:
             elif event_type == 'charge.failed':
                 return self._handle_charge_failed(event['data']['object'], idempotency_key)
             
-            logger.info(f"[v0] Unhandled event type: {event_type}")
+            logger.info(f"Unhandled event type: {event_type}")
             return {'handled': False}
         except Exception as e:
-            logger.error(f"[v0] Error handling webhook: {str(e)}")
+            logger.error(f"Error handling webhook: {str(e)}")
             return {'error': str(e), 'handled': False}
     
     def _handle_payment_succeeded(self, payment_intent, idempotency_key=None):
@@ -146,7 +146,7 @@ class PaymentService:
         transaction_id = payment_intent.get('metadata', {}).get('transaction_id')
         
         if not transaction_id:
-            logger.error("[v0] No transaction ID in payment metadata")
+            logger.error("No transaction ID in payment metadata")
             return {'handled': False}
         
         try:
@@ -154,7 +154,7 @@ class PaymentService:
             
             # Prevent double processing with idempotency check
             if transaction.status == 'completed':
-                logger.info(f"[v0] Transaction {transaction_id} already completed")
+                logger.info(f"Transaction {transaction_id} already completed")
                 return {'handled': True, 'already_processed': True}
             
             transaction.status = 'completed'
@@ -164,13 +164,13 @@ class PaymentService:
             }
             transaction.save()
             
-            logger.info(f"[v0] Transaction {transaction_id} marked as completed")
+            logger.info(f"Transaction {transaction_id} marked as completed")
             return {'handled': True, 'transaction_id': transaction_id}
         except Transaction.DoesNotExist:
-            logger.error(f"[v0] Transaction {transaction_id} not found")
+            logger.error(f"Transaction {transaction_id} not found")
             return {'handled': False}
         except Exception as e:
-            logger.error(f"[v0] Error processing succeeded payment: {str(e)}")
+            logger.error(f"Error processing succeeded payment: {str(e)}")
             return {'handled': False, 'error': str(e)}
     
     def _handle_payment_failed(self, payment_intent, idempotency_key=None):
@@ -178,7 +178,7 @@ class PaymentService:
         transaction_id = payment_intent.get('metadata', {}).get('transaction_id')
         
         if not transaction_id:
-            logger.error("[v0] No transaction ID in payment metadata")
+            logger.error("No transaction ID in payment metadata")
             return {'handled': False}
         
         try:
@@ -190,10 +190,10 @@ class PaymentService:
             }
             transaction.save()
             
-            logger.info(f"[v0] Transaction {transaction_id} marked as failed")
+            logger.info(f"Transaction {transaction_id} marked as failed")
             return {'handled': True, 'transaction_id': transaction_id}
         except Exception as e:
-            logger.error(f"[v0] Error processing failed payment: {str(e)}")
+            logger.error(f"Error processing failed payment: {str(e)}")
             return {'handled': False}
     
     def _handle_charge_failed(self, charge, idempotency_key=None):
@@ -202,7 +202,7 @@ class PaymentService:
         transaction_id = charge.get('metadata', {}).get('transaction_id')
         
         if not transaction_id:
-            logger.error("[v0] No transaction ID in charge metadata")
+            logger.error("No transaction ID in charge metadata")
             return {'handled': False}
         
         try:
@@ -214,8 +214,8 @@ class PaymentService:
             }
             transaction.save()
             
-            logger.info(f"[v0] Transaction {transaction_id} marked as failed due to charge failure")
+            logger.info(f"Transaction {transaction_id} marked as failed due to charge failure")
             return {'handled': True}
         except Exception as e:
-            logger.error(f"[v0] Error processing failed charge: {str(e)}")
+            logger.error(f"Error processing failed charge: {str(e)}")
             return {'handled': False}

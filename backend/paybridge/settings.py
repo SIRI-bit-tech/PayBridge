@@ -64,14 +64,27 @@ WSGI_APPLICATION = 'paybridge.wsgi.application'
 
 ASGI_APPLICATION = 'paybridge.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+# Channel Layers Configuration
+# Use Redis from environment variable
+REDIS_URL = config('REDIS_URL', default=None)
+
+if REDIS_URL:
+    # Use the full Redis URL directly
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [REDIS_URL],  # Pass the full URL as a string
+            },
         },
-    },
-}
+    }
+else:
+    # No Redis URL, use in-memory channel layer for development
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 _database_url = config('DATABASE_URL', default=None)
 
