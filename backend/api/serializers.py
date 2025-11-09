@@ -11,10 +11,12 @@ import phonenumbers
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     
     class Meta:
         model = UserProfile
-        fields = ['email', 'company_name', 'country', 'phone_number', 'business_type', 'developer_type', 'preferred_currency', 'kyc_verified']
+        fields = ['email', 'first_name', 'last_name', 'company_name', 'country', 'phone_number', 'business_type', 'developer_type', 'preferred_currency', 'kyc_verified']
 
 
 class RegistrationSerializer(serializers.Serializer):

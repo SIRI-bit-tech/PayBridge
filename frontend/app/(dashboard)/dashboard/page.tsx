@@ -122,13 +122,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Real-time payment analytics and insights</p>
-        {wsConnected && (
-          <div className="flex items-center gap-2 text-xs text-green-500 mt-2">
+        <div className="flex items-center gap-3">
+          <p className="text-muted-foreground">Real-time payment analytics and insights</p>
+          {wsConnected && (
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            <span>Real-time connection active</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Key Metrics */}
