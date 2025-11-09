@@ -698,7 +698,7 @@ class AnalyticsViewSet(viewsets.ViewSet):
         transactions_by_status = {s['status']: s['count'] for s in statuses}
         
         # Daily volume (last 30 days)
-        thirty_days_ago = datetime.now() - timedelta(days=30)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
         daily_data = Transaction.objects.filter(
             user=user,
             created_at__gte=thirty_days_ago

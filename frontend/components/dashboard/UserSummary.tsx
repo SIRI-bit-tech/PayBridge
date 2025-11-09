@@ -21,17 +21,24 @@ interface UserProfile {
 export function UserSummary() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProfile()
   }, [])
 
   const fetchProfile = async () => {
-    const response = await getProfile()
-    if (response.data) {
-      setProfile(response.data as UserProfile)
+    try {
+      const response = await getProfile()
+      if (response.data) {
+        setProfile(response.data as UserProfile)
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile:", err)
+      setError("Failed to load profile")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   if (loading) {
@@ -42,6 +49,19 @@ export function UserSummary() {
         </CardHeader>
         <CardContent>
           <div className="text-muted-foreground">Loading profile...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-destructive">{error}</div>
         </CardContent>
       </Card>
     )
@@ -60,7 +80,45 @@ export function UserSummary() {
     )
   }
 
-  const initials = `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase()
+  // Safely extract initials with fallbacks
+  const getInitials = () => {
+    const firstName = profile.first_name?.trim()
+    const lastName = profile.last_name?.trim()
+    const email = profile.email?.trim()
+    
+    // Try first and last name
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase()
+    }
+    
+    // Try first name only
+    if (firstName && firstName.length >= 2) {
+      return firstName.substring(0, 2).toUpperCase()
+    }
+    
+    if (firstName) {
+      return firstName[0].toUpperCase()
+    }
+    
+    // Try last name only
+    if (lastName && lastName.length >= 2) {
+      return lastName.substring(0, 2).toUpperCase()
+    }
+    
+    if (lastName) {
+      return lastName[0].toUpperCase()
+    }
+    
+    // Fallback to email
+    if (email) {
+      return email[0].toUpperCase()
+    }
+    
+    // Final fallback
+    return "?"
+  }
+
+  const initials = getInitials()
 
   return (
     <Card>
