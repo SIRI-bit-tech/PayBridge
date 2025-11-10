@@ -352,12 +352,11 @@ class APIKeyViewSet(viewsets.ModelViewSet):
             details={'api_key_id': str(api_key.id), 'label': label}
         )
         
-        # Broadcast real-time update via Socket.IO
         from api.socketio_server import emit_api_key_created
-        import asyncio
+        from asgiref.sync import async_to_sync
         
         try:
-            asyncio.create_task(emit_api_key_created(
+            async_to_sync(emit_api_key_created)(
                 request.user.id,
                 {
                     'id': str(api_key.id),
@@ -366,10 +365,9 @@ class APIKeyViewSet(viewsets.ModelViewSet):
                     'status': api_key.status,
                     'created_at': api_key.created_at.isoformat(),
                 }
-            ))
+            )
         except Exception as e:
-            logger.error(f"Failed to emit Socket.IO event: {str(e)}")
-        
+            logger.exception("Failed to emit Socket.IO event")
         # Return the raw key only once
         return Response({
             'id': str(api_key.id),
