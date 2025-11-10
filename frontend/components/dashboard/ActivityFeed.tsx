@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { WebSocketClient } from "@/lib/websocket"
+import { useDashboardSocketIO } from "@/lib/useDashboardSocketIO"
 import { formatDistanceToNow } from "date-fns"
 import { Activity, CheckCircle2, XCircle, AlertCircle, DollarSign } from "lucide-react"
 
@@ -17,52 +17,19 @@ interface ActivityEvent {
 
 export function ActivityFeed() {
   const [activities, setActivities] = useState<ActivityEvent[]>([])
-  const [wsConnected, setWsConnected] = useState(false)
 
-  useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
-    if (!token) return
-
-    const ws = new WebSocketClient(token)
-    ws.connect("/ws/dashboard/")
-      .then(() => {
-        setWsConnected(true)
-      })
-      .catch((err) => console.error("WebSocket connection failed:", err))
-
-    ws.on("transaction", (data: any) => {
+  const { isConnected } = useDashboardSocketIO({
+    onTransactionUpdate: (data: any) => {
       const activity: ActivityEvent = {
-        id: data.data.id || Date.now().toString(),
+        id: data.id || Date.now().toString(),
         type: "transaction",
-        message: `New transaction: ${data.data.currency} ${data.data.amount} via ${data.data.provider}`,
+        message: `New transaction: ${data.currency} ${data.amount} via ${data.provider}`,
         timestamp: new Date().toISOString(),
-        status: data.data.status,
+        status: data.status,
       }
       setActivities((prev) => [activity, ...prev].slice(0, 20))
-    })
-
-    ws.on("webhook", (data: any) => {
-      const activity: ActivityEvent = {
-        id: Date.now().toString(),
-        type: "webhook",
-        message: `Webhook ${data.event_type} received`,
-        timestamp: new Date().toISOString(),
-      }
-      setActivities((prev) => [activity, ...prev].slice(0, 20))
-    })
-
-    ws.on("settlement", (data: any) => {
-      const activity: ActivityEvent = {
-        id: Date.now().toString(),
-        type: "settlement",
-        message: `Settlement processed: ${data.currency} ${data.amount}`,
-        timestamp: new Date().toISOString(),
-      }
-      setActivities((prev) => [activity, ...prev].slice(0, 20))
-    })
-
-    return () => ws.disconnect()
-  }, [])
+    },
+  })
 
   const getIcon = (type: string, status?: string) => {
     if (type === "transaction") {
@@ -80,7 +47,7 @@ export function ActivityFeed() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Activity Feed</span>
-          {wsConnected && (
+          {isConnected && (
             <div className="flex items-center gap-2 text-xs text-green-500 font-normal">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               Live

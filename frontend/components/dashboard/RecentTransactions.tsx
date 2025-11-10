@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { graphQLQuery } from "@/lib/api"
-import { WebSocketClient } from "@/lib/websocket"
+import { useDashboardSocketIO } from "@/lib/useDashboardSocketIO"
 import type { Transaction } from "@/types"
 import { formatDistanceToNow } from "date-fns"
 
@@ -51,24 +51,25 @@ export function RecentTransactions() {
     fetchTransactions()
   }, [])
 
-  // Real-time updates via WebSocket
-  useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
-    if (!token) return
-
-    const ws = new WebSocketClient(token)
-    ws.connect("/ws/dashboard/")
-      .then(() => {
-        ws.send("subscribe_transactions", {})
-      })
-      .catch((err) => console.error("WebSocket connection failed:", err))
-
-    ws.on("transaction", (data: any) => {
-      setTransactions((prev) => [data.data, ...prev].slice(0, 10))
-    })
-
-    return () => ws.disconnect()
-  }, [])
+  // Real-time updates via Socket.IO
+  useDashboardSocketIO({
+    onTransactionUpdate: (data: any) => {
+      const newTxn: Transaction = {
+        id: data.id,
+        reference: data.reference,
+        amount: parseFloat(data.amount),
+        currency: data.currency,
+        status: data.status,
+        provider: data.provider,
+        customer_email: data.customer_email,
+        description: data.description,
+        created_at: data.created_at,
+        fee: data.fee || 0,
+        net_amount: data.net_amount || parseFloat(data.amount),
+      }
+      setTransactions((prev) => [newTxn, ...prev].slice(0, 10))
+    },
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
