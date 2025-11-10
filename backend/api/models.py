@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 import uuid
 import secrets
+import hashlib
 
 # Common currency choices used across models
 CURRENCY_CHOICES = (
@@ -69,6 +70,7 @@ class APIKey(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
     name = models.CharField(max_length=255)
     key = models.CharField(max_length=255, unique=True, db_index=True)
+    key_hash = models.CharField(max_length=256, unique=True, db_index=False, null=True, blank=True)
     secret = models.CharField(max_length=255, unique=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     last_used = models.DateTimeField(null=True, blank=True)
@@ -82,10 +84,20 @@ class APIKey(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.key:
-            self.key = f"pk_{secrets.token_urlsafe(32)}"
+            # Generate a secure random key
+            raw_key = secrets.token_urlsafe(32)
+            self.key = f"pk_live_{raw_key}"
+            # Hash the key for storage
+            self.key_hash = hashlib.sha256(self.key.encode()).hexdigest()
         if not self.secret:
             self.secret = secrets.token_urlsafe(64)
         super().save(*args, **kwargs)
+    
+    def get_masked_key(self):
+        """Return masked version of the key"""
+        if len(self.key) > 12:
+            return f"{self.key[:8]}****{self.key[-4:]}"
+        return "****"
     
     def __str__(self):
         return f"{self.user.email} - {self.name}"

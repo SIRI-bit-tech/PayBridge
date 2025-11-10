@@ -19,7 +19,7 @@ from datetime import timedelta
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction,
     Webhook, Subscription, AuditLog, KYCVerification,
-    Invoice, UsageMetric
+    Invoice, UsageMetric, APILog
 )
 from .serializers import (
     UserProfileSerializer, APIKeySerializer, PaymentProviderSerializer,
@@ -316,44 +316,128 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class APIKeyViewSet(viewsets.ModelViewSet):
     serializer_class = APIKeySerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'delete']
+    pagination_class = None  # Disable pagination for API keys
     
     def get_queryset(self):
-        return APIKey.objects.filter(user=self.request.user)
+        return APIKey.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def list(self, request, *args, **kwargs):
+        """List all API keys with masked keys"""
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
-        name = request.data.get('name')
-        if not name:
-            return Response({'error': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
+        """Generate a new API key"""
+        label = request.data.get('label') or request.data.get('name')
+        if not label:
+            return Response(
+                {'error': 'Label is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        api_key = APIKey.objects.create(
-            user=request.user,
-            name=name
-        )
+        # Create API key (key generation happens in model save)
+        api_key = APIKey(user=request.user, name=label)
+        api_key.save()
         
+        # Store the raw key before it's lost
+        raw_key = api_key.key
+        
+        # Log the action
         AuditLog.objects.create(
             user=request.user,
             action='create_api_key',
             ip_address=self.get_client_ip(request),
-            details={'api_key_id': str(api_key.id), 'name': name}
+            details={'api_key_id': str(api_key.id), 'label': label}
         )
         
-        serializer = self.get_serializer(api_key)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        from api.socketio_server import emit_api_key_created
+        from asgiref.sync import async_to_sync
+        
+        try:
+            async_to_sync(emit_api_key_created)(
+                request.user.id,
+                {
+                    'id': str(api_key.id),
+                    'label': api_key.name,
+                    'masked_key': api_key.get_masked_key(),
+                    'status': api_key.status,
+                    'created_at': api_key.created_at.isoformat(),
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to emit Socket.IO event")
+        # Return the raw key only once
+        return Response({
+            'id': str(api_key.id),
+            'label': api_key.name,
+            'key': raw_key,  # Raw key shown only once
+            'masked_key': api_key.get_masked_key(),
+            'status': api_key.status,
+            'created_at': api_key.created_at.isoformat(),
+            'last_used': api_key.last_used.isoformat() if api_key.last_used else None,
+        }, status=status.HTTP_201_CREATED)
     
-    @action(detail='pk', methods=['post'])
+    @action(detail=True, methods=['post'])
     def revoke(self, request, pk=None):
+        """Revoke an API key"""
         api_key = self.get_object()
+        
+        if api_key.status == 'revoked':
+            return Response(
+                {'error': 'API key is already revoked'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         api_key.status = 'revoked'
         api_key.save()
         
+        # Log the action
         AuditLog.objects.create(
             user=request.user,
             action='revoke_api_key',
             ip_address=self.get_client_ip(request),
-            details={'api_key_id': str(api_key.id)}
+            details={'api_key_id': str(api_key.id), 'label': api_key.name}
         )
         
-        return Response({'status': 'API key revoked'})
+        # Broadcast real-time update via Socket.IO
+        from api.socketio_server import emit_api_key_revoked
+        import asyncio
+        
+        try:
+            asyncio.create_task(emit_api_key_revoked(
+                request.user.id,
+                {
+                    'id': str(api_key.id),
+                    'status': 'revoked',
+                }
+            ))
+        except Exception as e:
+            logger.error(f"Failed to emit Socket.IO event: {str(e)}")
+        
+        serializer = self.get_serializer(api_key)
+        return Response({
+            'message': 'API key revoked successfully',
+            'data': serializer.data
+        })
+    
+    @action(detail=False, methods=['get'])
+    def activity(self, request):
+        """Get API key usage activity"""
+        from django.db.models import Count
+        from datetime import timedelta
+        
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        
+        activity = APILog.objects.filter(
+            user=request.user,
+            created_at__gte=thirty_days_ago
+        ).values('api_key__id', 'api_key__name').annotate(
+            total_calls=Count('id')
+        ).order_by('-total_calls')
+        
+        return Response(list(activity))
     
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

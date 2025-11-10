@@ -288,6 +288,40 @@ def cleanup_old_logs():
 
 
 @shared_task
+def update_api_key_last_used(api_key_id):
+    """Update API key last_used timestamp asynchronously"""
+    from .models import APIKey
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+    
+    try:
+        api_key = APIKey.objects.get(id=api_key_id)
+        api_key.last_used = timezone.now()
+        api_key.save(update_fields=['last_used'])
+        
+        # Broadcast real-time update
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"api_keys_{api_key.user.id}",
+                {
+                    'type': 'api_key_used',
+                    'data': {
+                        'id': str(api_key.id),
+                        'last_used': api_key.last_used.isoformat(),
+                    }
+                }
+            )
+        
+        logger.debug(f"Updated last_used for API key {api_key_id}")
+        
+    except APIKey.DoesNotExist:
+        logger.warning(f"API key {api_key_id} not found")
+    except Exception as e:
+        logger.error(f"Error updating API key last_used: {str(e)}")
+
+
+@shared_task
 def retry_failed_webhooks():
     """Retry failed webhook deliveries with smart backoff"""
     try:

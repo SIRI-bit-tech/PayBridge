@@ -1,13 +1,13 @@
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import exceptions
 from .models import APIKey
-import hmac
+from django.utils import timezone
 import hashlib
 
 
 class APIKeyAuthentication(TokenAuthentication):
     """
-    Custom authentication for API key validation
+    Custom authentication for API key validation using SHA256 hashing
     """
     keyword = 'Bearer'
     
@@ -34,8 +34,14 @@ class APIKeyAuthentication(TokenAuthentication):
         return self.authenticate_credentials(token, request)
     
     def authenticate_credentials(self, key, request):
+        # Hash the provided key
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        
         try:
-            api_key_obj = APIKey.objects.get(key=key, status='active')
+            api_key_obj = APIKey.objects.select_related('user').get(
+                key_hash=key_hash, 
+                status='active'
+            )
         except APIKey.DoesNotExist:
             raise exceptions.AuthenticationFailed('Invalid or expired API key')
         
@@ -45,8 +51,9 @@ class APIKeyAuthentication(TokenAuthentication):
             if client_ip not in api_key_obj.ip_whitelist:
                 raise exceptions.AuthenticationFailed('IP not whitelisted')
         
-        api_key_obj.last_used = timezone.now()
-        api_key_obj.save()
+        # Update last_used timestamp asynchronously to avoid blocking
+        from .tasks import update_api_key_last_used
+        update_api_key_last_used.delay(str(api_key_obj.id))
         
         return (api_key_obj.user, api_key_obj)
     

@@ -69,12 +69,14 @@ ASGI_APPLICATION = 'paybridge.asgi.application'
 REDIS_URL = config('REDIS_URL', default=None)
 
 if REDIS_URL:
-    # Use the full Redis URL directly
+    # Use the full Redis URL directly with connection pooling
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
                 'hosts': [REDIS_URL],  # Pass the full URL as a string
+                'capacity': 1500,  # Maximum number of messages to store
+                'expiry': 10,  # Message expiry time in seconds
             },
         },
     }

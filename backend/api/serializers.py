@@ -128,10 +128,17 @@ class RegistrationSerializer(serializers.Serializer):
 
 
 class APIKeySerializer(serializers.ModelSerializer):
+    masked_key = serializers.SerializerMethodField()
+    label = serializers.CharField(source='name', required=False)
+    
     class Meta:
         model = APIKey
-        fields = ['id', 'name', 'key', 'status', 'last_used', 'created_at']
-        read_only_fields = ['id', 'key', 'secret', 'last_used', 'created_at']
+        fields = ['id', 'name', 'label', 'masked_key', 'status', 'last_used', 'created_at']
+        read_only_fields = ['id', 'masked_key', 'last_used', 'created_at']
+    
+    def get_masked_key(self, obj):
+        """Return masked version of the key"""
+        return obj.get_masked_key()
 
 
 class PaymentProviderSerializer(serializers.ModelSerializer):
