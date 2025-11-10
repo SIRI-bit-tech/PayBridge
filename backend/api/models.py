@@ -70,7 +70,7 @@ class APIKey(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
     name = models.CharField(max_length=255)
     key = models.CharField(max_length=255, unique=True, db_index=True)
-    key_hash = models.CharField(max_length=256, unique=True, db_index=False, null=True, blank=True)
+    key_hash = models.CharField(max_length=256, unique=True, db_index=True, null=True, blank=True)
     secret = models.CharField(max_length=255, unique=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     last_used = models.DateTimeField(null=True, blank=True)
