@@ -16,6 +16,7 @@ let connectionCount = 0
 export function useSocketIO(options: UseSocketIOOptions = {}) {
   const { autoConnect = true, onConnect, onDisconnect, onError } = options
   const [isConnected, setIsConnected] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
   const socketRef = useRef<Socket | null>(null)
   const callbacksRef = useRef({ onConnect, onDisconnect, onError })
 
@@ -24,30 +25,34 @@ export function useSocketIO(options: UseSocketIOOptions = {}) {
     callbacksRef.current = { onConnect, onDisconnect, onError }
   }, [onConnect, onDisconnect, onError])
 
+  // Track token changes
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    
+    const currentToken = localStorage.getItem('access_token')
+    setToken(currentToken)
+
+    // Listen for storage events (token changes in other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'access_token') {
+        setToken(e.newValue)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  useEffect(() => {
     if (!token) {
       console.warn('No access token available for Socket.IO connection')
       return
     }
 
-    // Reuse existing socket if available
+    // Force disconnect existing socket if token changed
     if (globalSocket && globalSocket.connected) {
-      console.log('Reusing existing Socket.IO connection:', globalSocket.id)
-      socketRef.current = globalSocket
-      setIsConnected(true)
-      connectionCount++
-      callbacksRef.current.onConnect?.()
-      return () => {
-        connectionCount--
-        // Only disconnect if no other components are using it
-        if (connectionCount === 0 && globalSocket) {
-          console.log('Last component unmounted, disconnecting Socket.IO')
-          globalSocket.disconnect()
-          globalSocket = null
-        }
-      }
+      console.log('Token changed, disconnecting existing Socket.IO connection')
+      globalSocket.disconnect()
+      globalSocket = null
+      connectionCount = 0
     }
 
     // Create new Socket.IO connection only if none exists
@@ -104,7 +109,7 @@ export function useSocketIO(options: UseSocketIOOptions = {}) {
         socketRef.current = null
       }
     }
-  }, [autoConnect]) // Only depend on autoConnect, not callbacks
+  }, [autoConnect, token]) // Reconnect when token changes
 
   return {
     socket: socketRef.current,

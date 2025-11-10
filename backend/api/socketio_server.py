@@ -3,6 +3,7 @@ Socket.IO server for real-time updates
 """
 import socketio
 import logging
+from django.conf import settings
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.models import User
 from channels.db import database_sync_to_async
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Create Socket.IO server with async mode
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins='*',  # Configure this properly in production
+    cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS,
     logger=True,
     engineio_logger=True,
 )

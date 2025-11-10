@@ -183,8 +183,7 @@ class APIKeyMiddleware(MiddlewareMixin):
             request.user = user
             request.api_key = api_key_obj
             
-            # Log API usage
-            self._log_api_usage(request, api_key_obj)
+            # Note: API key last_used is already updated in authenticate_credentials()
             
             return None
             
@@ -193,14 +192,6 @@ class APIKeyMiddleware(MiddlewareMixin):
         except Exception as e:
             logger.error(f"API key validation error: {str(e)}", exc_info=True)
             return self.error_response('Internal server error')
-    
-    def _log_api_usage(self, request, api_key_obj):
-        """Log API key usage asynchronously"""
-        try:
-            from .tasks import update_api_key_last_used
-            update_api_key_last_used.delay(str(api_key_obj.id))
-        except Exception as e:
-            logger.error(f"Error logging API usage: {str(e)}")
     
     def unauthorized_response(self, message):
         """Return 401 Unauthorized response"""
