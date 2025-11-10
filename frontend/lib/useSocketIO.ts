@@ -44,6 +44,20 @@ export function useSocketIO(options: UseSocketIOOptions = {}) {
   useEffect(() => {
     if (!token) {
       console.warn('No access token available for Socket.IO connection')
+      
+      // Cleanup existing socket if token becomes null (e.g., after logout)
+      if (globalSocket) {
+        console.log('Token removed, disconnecting existing Socket.IO connection')
+        globalSocket.removeAllListeners()
+        globalSocket.disconnect()
+        globalSocket = null
+      }
+      
+      if (socketRef.current) {
+        socketRef.current = null
+      }
+      
+      setIsConnected(false)
       return
     }
 
@@ -52,7 +66,6 @@ export function useSocketIO(options: UseSocketIOOptions = {}) {
       console.log('Token changed, disconnecting existing Socket.IO connection')
       globalSocket.disconnect()
       globalSocket = null
-      connectionCount = 0
     }
 
     // Create new Socket.IO connection only if none exists
