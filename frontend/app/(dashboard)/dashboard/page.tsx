@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Activity } from "lucide-react"
 import {
   AreaChart,
   Area,
@@ -15,7 +16,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { apiCall } from "@/lib/api"
-import { useWebSocket } from "@/hooks/useWebSocket"
+import { useDashboardSocketIO } from "@/lib/useDashboardSocketIO"
 import type { Analytics } from "@/types"
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions"
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed"
@@ -25,7 +26,6 @@ import { UserSummary } from "@/components/dashboard/UserSummary"
 
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
-  const [wsConnected, setWsConnected] = useState(false)
 
   // Fetch analytics via REST API (with GraphQL fallback)
   useEffect(() => {
@@ -85,33 +85,26 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Real-time WebSocket updates
-  const wsUrl = typeof window !== "undefined" 
-    ? `ws://localhost:8000/ws/dashboard/`
-    : ""
-  
-  const { isConnected, lastMessage } = useWebSocket(wsUrl)
-
-  useEffect(() => {
-    setWsConnected(isConnected)
-  }, [isConnected])
-
-  useEffect(() => {
-    if (lastMessage) {
-      if (lastMessage.type === 'analytics') {
-        setAnalytics((prev) => prev ? { ...prev, ...lastMessage.data } : lastMessage.data)
-      } else if (lastMessage.type === 'transaction_update') {
-        // Refresh analytics when transaction updates
-        const fetchAnalytics = async () => {
-          const restResponse = await apiCall<any>("/analytics/dashboard/")
-          if (restResponse.data) {
-            setAnalytics(restResponse.data)
-          }
-        }
-        fetchAnalytics()
+  // Real-time Socket.IO updates
+  const { isConnected } = useDashboardSocketIO({
+    onAnalyticsUpdate: (data) => {
+      console.log('Analytics update received:', data)
+      setAnalytics((prev) => prev ? { ...prev, ...data } : data)
+    },
+    onTransactionUpdate: async (data) => {
+      console.log('Transaction update received:', data)
+      // Refresh analytics when transaction updates
+      const restResponse = await apiCall<any>("/analytics/dashboard/")
+      if (restResponse.data) {
+        setAnalytics(restResponse.data)
       }
-    }
-  }, [lastMessage])
+    },
+    onError: (error) => {
+      console.error('Dashboard Socket.IO error:', error)
+    },
+  })
+
+
 
   if (!analytics) {
     return <div className="p-8 text-foreground">Loading analytics...</div>
@@ -122,13 +115,19 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <div className="flex items-center gap-3">
-          <p className="text-muted-foreground">Real-time payment analytics and insights</p>
-          {wsConnected && (
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          )}
-        </div>
+        <p className="text-muted-foreground">Real-time payment analytics and insights</p>
       </div>
+
+      {/* Connection Status - Subtle indicator */}
+      {isConnected && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </div>
+          <Activity className="h-4 w-4 text-green-500" />
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
