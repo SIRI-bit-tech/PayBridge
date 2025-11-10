@@ -213,10 +213,10 @@ export async function getApiKeys() {
   return apiCall("/api-keys/")
 }
 
-export async function createApiKey(name: string) {
+export async function createApiKey(label: string) {
   return apiCall("/api-keys/", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ label }),
   })
 }
 
@@ -224,6 +224,10 @@ export async function revokeApiKey(id: string) {
   return apiCall(`/api-keys/${id}/revoke/`, {
     method: "POST",
   })
+}
+
+export async function getApiKeyActivity() {
+  return apiCall("/api-keys/activity/")
 }
 
 export async function getPaymentProviders() {

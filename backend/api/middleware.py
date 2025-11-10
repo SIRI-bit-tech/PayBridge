@@ -134,3 +134,86 @@ class ConnectionPoolMiddleware(MiddlewareMixin):
         for conn in connections.all():
             conn.close()
         return response
+
+
+class APIKeyMiddleware(MiddlewareMixin):
+    """
+    Middleware to intercept external API calls and validate API keys.
+    Routes requests through PayBridge's integrated payment providers.
+    """
+    
+    # Endpoints that require API key authentication
+    API_KEY_REQUIRED_PATHS = [
+        '/api/v1/payments/',
+        '/api/v1/balance/',
+        '/api/v1/verify/',
+        '/api/v1/external/',
+    ]
+    
+    def process_request(self, request):
+        # Check if this endpoint requires API key auth
+        requires_api_key = any(
+            request.path.startswith(path) 
+            for path in self.API_KEY_REQUIRED_PATHS
+        )
+        
+        if not requires_api_key:
+            return None
+        
+        # Extract API key from Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return self.unauthorized_response('Missing or invalid Authorization header')
+        
+        api_key = auth_header.replace('Bearer ', '').strip()
+        
+        if not api_key:
+            return self.unauthorized_response('API key is required')
+        
+        # Validate API key using authentication class
+        from .authentication import APIKeyAuthentication
+        from rest_framework.exceptions import AuthenticationFailed
+        
+        try:
+            auth = APIKeyAuthentication()
+            user, api_key_obj = auth.authenticate_credentials(api_key, request)
+            
+            # Attach user and API key to request
+            request.user = user
+            request.api_key = api_key_obj
+            
+            # Log API usage
+            self._log_api_usage(request, api_key_obj)
+            
+            return None
+            
+        except AuthenticationFailed as e:
+            return self.unauthorized_response(str(e))
+        except Exception as e:
+            logger.error(f"API key validation error: {str(e)}", exc_info=True)
+            return self.error_response('Internal server error')
+    
+    def _log_api_usage(self, request, api_key_obj):
+        """Log API key usage asynchronously"""
+        try:
+            from .tasks import update_api_key_last_used
+            update_api_key_last_used.delay(str(api_key_obj.id))
+        except Exception as e:
+            logger.error(f"Error logging API usage: {str(e)}")
+    
+    def unauthorized_response(self, message):
+        """Return 401 Unauthorized response"""
+        from django.http import JsonResponse
+        return JsonResponse(
+            {'error': message, 'code': 'unauthorized'},
+            status=401
+        )
+    
+    def error_response(self, message):
+        """Return 500 Internal Server Error response"""
+        from django.http import JsonResponse
+        return JsonResponse(
+            {'error': message, 'code': 'internal_error'},
+            status=500
+        )

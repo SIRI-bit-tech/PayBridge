@@ -13,10 +13,23 @@ export interface User {
 export interface APIKey {
   id: string
   name: string
-  key: string
+  label?: string
+  key?: string  // Only present on creation
+  masked_key: string
   status: "active" | "inactive" | "revoked"
   last_used: string | null
   created_at: string
+}
+
+export interface APIKeyActivity {
+  api_key_id: string
+  api_key_name: string
+  total_calls: number
+}
+
+export interface WebSocketMessage {
+  type: 'api_key_created' | 'api_key_revoked' | 'api_key_used' | 'pong'
+  data?: any
 }
 
 export interface Transaction {
