@@ -243,6 +243,62 @@ class ChapaHandler(PaymentHandler):
         return None
 
 
+class MonoHandler(PaymentHandler):
+    """Mono payment handler"""
+    
+    def __init__(self):
+        super().__init__('mono')
+    
+    def verify_signature(self, payload, signature, secret=None):
+        """Verify Mono webhook signature"""
+        secret = secret or getattr(settings, 'MONO_API_KEY', '')
+        if not secret:
+            return True  # Skip verification if no secret configured
+        computed = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+        return computed == signature
+    
+    def process_webhook(self, data):
+        """Process Mono webhook"""
+        reference = data.get('reference') or data.get('id')
+        status_map = {
+            'successful': 'completed',
+            'success': 'completed',
+            'failed': 'failed',
+            'pending': 'pending',
+        }
+        status = status_map.get(data.get('status', '').lower(), 'failed')
+        
+        with db_transaction.atomic():
+            trans = Transaction.objects.filter(reference=reference).first()
+            if trans:
+                trans.status = status
+                trans.provider_response = data
+                trans.save()
+                return trans
+        return None
+    
+    def initiate_payment(self, amount, email, reference, callback_url):
+        """Initiate Mono payment"""
+        api_key = getattr(settings, 'MONO_API_KEY', '')
+        headers = {
+            'Authorization': f"Bearer {api_key}",
+            'Content-Type': 'application/json',
+        }
+        payload = {
+            'amount': amount,
+            'email': email,
+            'reference': reference,
+            'callback_url': callback_url,
+        }
+        
+        response = requests.post(
+            'https://api.withmono.com/v1/payments/initiate',
+            headers=headers,
+            json=payload
+        )
+        return response.json()
+
+
 def get_payment_handler(provider_name):
     """Factory function to get payment handler"""
     handlers = {
@@ -250,6 +306,7 @@ def get_payment_handler(provider_name):
         'flutterwave': FlutterwaveHandler,
         'stripe': StripeHandler,
         'chapa': ChapaHandler,
+        'mono': MonoHandler,
     }
     handler_class = handlers.get(provider_name)
     if not handler_class:

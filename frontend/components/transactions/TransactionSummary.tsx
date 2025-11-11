@@ -14,8 +14,12 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
     },
     {
       label: 'Total Amount',
-      value: `$${summary.total_amount.toLocaleString()}`,
+      value: summary.total_amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
       color: 'text-green-400',
+      sublabel: 'Multi-currency',
     },
     {
       label: 'Successful',
@@ -42,6 +46,9 @@ export function TransactionSummary({ summary }: TransactionSummaryProps) {
             <div className="space-y-2">
               <p className="text-sm text-neutral-400">{stat.label}</p>
               <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              {'sublabel' in stat && (
+                <p className="text-xs text-neutral-500">{stat.sublabel}</p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -23,10 +23,11 @@ redis_subscriber = RedisSubscriber(sio)
 async def start_redis_listener():
     """Start Redis pub/sub listener in background"""
     try:
-        logger.info("Starting Redis pub/sub listener...")
+        logger.info("Connecting to Redis and starting listener...")
+        await redis_subscriber._connect()
         await redis_subscriber.listen()
     except Exception as e:
-        logger.error(f"Redis listener error: {str(e)}")
+        logger.exception(f"Redis listener error: {str(e)}")
 
 # Schedule Redis listener to start
 try:
