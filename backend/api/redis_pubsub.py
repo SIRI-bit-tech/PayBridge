@@ -174,12 +174,12 @@ class RedisSubscriber:
                     if message['type'] == 'message':
                         await self._handle_message(message)
                         
-            except Exception as e:
-                logger.exception(f"Error in Redis listener: {str(e)}")
+            except Exception:
+                logger.error("Error in Redis listener")
                 # Clean up connection on error
                 self.pubsub = None
                 self.redis_client = None
-                # Wait before retrying with exponential backoff (capped at 30 seconds)
+                # Wait 5 seconds before retrying
                 await asyncio.sleep(5)
                 logger.info("Attempting to reconnect to Redis...")
     
