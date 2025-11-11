@@ -175,7 +175,7 @@ class RedisSubscriber:
                         await self._handle_message(message)
                         
             except Exception:
-                logger.exception("Error in Redis listener")
+                logger.error("Error in Redis listener")
                 # Clean up connection on error
                 self.pubsub = None
                 self.redis_client = None
