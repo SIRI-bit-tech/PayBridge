@@ -64,8 +64,11 @@ target/
 # pyenv
 .python-version
 
-# celery beat schedule file
+# celery beat schedule files
 celerybeat-schedule
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
 
 # SageMath parsed files
 .sagemath-parsed-files.txt
