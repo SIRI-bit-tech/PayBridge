@@ -4,6 +4,7 @@ Socket.IO server for real-time updates with Redis adapter
 import socketio
 import logging
 import os
+from urllib.parse import quote_plus
 from django.conf import settings
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.models import User
@@ -17,8 +18,13 @@ REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 REDIS_DB = int(os.getenv('REDIS_DB', 0))
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
 
-# Create Redis manager for Socket.IO
-redis_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}" if REDIS_PASSWORD else f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+# Create Redis manager for Socket.IO with URL-encoded password
+if REDIS_PASSWORD:
+    # URL-encode password to handle special characters
+    encoded_password = quote_plus(REDIS_PASSWORD)
+    redis_url = f"redis://:{encoded_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+else:
+    redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 try:
     # Create Socket.IO server with Redis adapter for multi-server support
