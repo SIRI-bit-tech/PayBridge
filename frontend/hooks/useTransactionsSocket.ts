@@ -48,7 +48,6 @@ export function useTransactionsSocket(options: UseTransactionsSocketOptions = {}
       }
     }
   }, [isConnected, emit, on, off, handleTransactionNew, handleTransactionUpdate])
-}
 
   return { isConnected }
 }
