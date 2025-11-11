@@ -33,3 +33,6 @@ pandas
 django-db-connection-pool
 django-cachalot
 phonenumbers
+
+redis[hiredis]
+aioredis

@@ -51,6 +51,9 @@ urlpatterns = [
     # API v1 routes
     path('api/v1/', include('api.urls')),
     
+    # Billing routes (without v1 prefix for frontend compatibility)
+    path('api/', include('api.urls')),
+    
     # Webhooks
     path('api/v1/webhooks/paystack/', paystack_webhook, name='paystack_webhook'),
     path('api/v1/webhooks/flutterwave/', flutterwave_webhook, name='flutterwave_webhook'),

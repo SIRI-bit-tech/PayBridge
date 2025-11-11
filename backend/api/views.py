@@ -18,12 +18,12 @@ from datetime import timedelta
 
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction,
-    Webhook, Subscription, AuditLog, KYCVerification,
+    Webhook, AuditLog, KYCVerification,
     Invoice, UsageMetric, APILog
 )
 from .serializers import (
     UserProfileSerializer, APIKeySerializer, PaymentProviderSerializer,
-    TransactionSerializer, WebhookSerializer, SubscriptionSerializer,
+    TransactionSerializer, WebhookSerializer,
     AuditLogSerializer, KYCVerificationSerializer, InvoiceSerializer,
     UsageMetricSerializer, RegistrationSerializer
 )
@@ -670,26 +670,7 @@ class WebhookViewSet(viewsets.ModelViewSet):
         return ip
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    serializer_class = SubscriptionSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_object(self):
-        obj, created = Subscription.objects.get_or_create(
-            user=self.request.user,
-            defaults={
-                'current_period_start': timezone.now(),
-                'current_period_end': timezone.now() + timedelta(days=30),
-                'renewal_date': timezone.now() + timedelta(days=30),
-            }
-        )
-        return obj
-    
-    @action(detail=False, methods=['get'])
-    def current(self, request):
-        subscription = self.get_object()
-        serializer = self.get_serializer(subscription)
-        return Response(serializer.data)
+
 
 
 class KYCViewSet(viewsets.ViewSet):

@@ -271,3 +271,61 @@ async def emit_transaction_status_update(user_id, data):
     room = f"transactions_{user_id}"
     await sio.emit('transaction:update', data, room=room)
     logger.info(f"Emitted transaction:update to room: {room}")
+
+
+@sio.event
+async def join_billing(sid):
+    """Join billing room for real-time updates"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            logger.warning(f"join_billing failed for {sid}: No user_id in session")
+            return
+        
+        room = f"billing_{user_id}"
+        sio.enter_room(sid, room)
+        logger.info(f"Client {sid} joined room: {room}")
+        
+        await sio.emit('joined_billing', {'room': room}, room=sid)
+    except Exception as e:
+        logger.error(f"Error in join_billing: {str(e)}")
+
+
+@sio.event
+async def leave_billing(sid):
+    """Leave billing room"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            return
+        
+        room = f"billing_{user_id}"
+        sio.leave_room(sid, room)
+        logger.info(f"Client {sid} left room: {room}")
+    except Exception as e:
+        logger.error(f"Error in leave_billing: {str(e)}")
+
+
+async def emit_plan_update(user_id, data):
+    """Emit plan update event to user"""
+    room = f"billing_{user_id}"
+    await sio.emit('plan:update', data, room=room)
+    logger.info(f"Emitted plan:update to room: {room}")
+
+
+async def emit_usage_update(user_id, data):
+    """Emit usage update event to user"""
+    room = f"billing_{user_id}"
+    await sio.emit('usage:update', data, room=room)
+    logger.info(f"Emitted usage:update to room: {room}")
+
+
+async def emit_limit_reached(user_id, data):
+    """Emit limit reached event to user"""
+    room = f"billing_{user_id}"
+    await sio.emit('plan:limit_reached', data, room=room)
+    logger.info(f"Emitted plan:limit_reached to room: {room}")

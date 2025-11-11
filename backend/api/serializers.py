@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction, 
-    Webhook, Subscription, AuditLog, KYCVerification,
+    Webhook, AuditLog, KYCVerification,
     Invoice, UsageMetric, WebhookEvent, CURRENCY_CHOICES
 )
 import phonenumbers
@@ -166,11 +166,7 @@ class WebhookSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subscription
-        fields = ['plan', 'status', 'current_period_start', 'current_period_end', 'renewal_date']
-        read_only_fields = ['status', 'current_period_start', 'current_period_end', 'renewal_date']
+
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
