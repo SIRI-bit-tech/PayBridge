@@ -33,7 +33,7 @@ export function useTransactionsSocket(options: UseTransactionsSocketOptions = {}
     if (isConnected) {
       // Join transactions room
       emit('join_transactions')
-      
+
       // Listen for transaction events
       on('transaction:new', handleTransactionNew)
       on('transaction:update', handleTransactionUpdate)
@@ -41,7 +41,7 @@ export function useTransactionsSocket(options: UseTransactionsSocketOptions = {}
       return () => {
         // Leave transactions room
         emit('leave_transactions')
-        
+
         // Clean up listeners
         off('transaction:new', handleTransactionNew)
         off('transaction:update', handleTransactionUpdate)
