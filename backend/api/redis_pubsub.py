@@ -114,54 +114,60 @@ class RedisSubscriber:
         self.sio = socketio_server
         self.redis_client = None
         self.pubsub = None
-        self._connect()
     
-    def _connect(self):
-        """Connect to Redis and subscribe to channels"""
+    async def _connect(self):
+        """Connect to Redis and subscribe to channels (async)"""
         try:
-            self.redis_client = redis.Redis(
-                host=REDIS_HOST,
-                port=REDIS_PORT,
-                db=REDIS_DB,
-                password=REDIS_PASSWORD,
+            # Import async redis
+            import redis.asyncio as aioredis
+            
+            # Create async Redis client
+            redis_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}" if REDIS_PASSWORD else f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+            
+            self.redis_client = await aioredis.from_url(
+                redis_url,
                 decode_responses=True,
                 socket_connect_timeout=5,
                 socket_keepalive=True,
             )
             
             # Test connection
-            self.redis_client.ping()
+            await self.redis_client.ping()
             
             # Create pubsub instance
             self.pubsub = self.redis_client.pubsub()
             
             # Subscribe to channels
-            self.pubsub.subscribe(TRANSACTION_EVENTS_CHANNEL)
-            self.pubsub.subscribe(API_KEY_EVENTS_CHANNEL)
+            await self.pubsub.subscribe(TRANSACTION_EVENTS_CHANNEL)
+            await self.pubsub.subscribe(API_KEY_EVENTS_CHANNEL)
             
             logger.info(f"Redis subscriber connected and subscribed to channels")
         except Exception as e:
-            logger.error(f"Failed to connect Redis subscriber: {str(e)}")
+            logger.exception(f"Failed to connect Redis subscriber: {str(e)}")
             self.redis_client = None
             self.pubsub = None
     
     async def listen(self):
-        """Listen for Redis pub/sub messages and emit to Socket.IO"""
+        """Listen for Redis pub/sub messages and emit to Socket.IO (async)"""
         if not self.pubsub:
-            logger.warning("Redis pubsub not available, skipping listener")
-            return
+            logger.warning("Redis pubsub not available, attempting to connect...")
+            await self._connect()
+            if not self.pubsub:
+                logger.error("Failed to connect to Redis, skipping listener")
+                return
         
         logger.info("Starting Redis pub/sub listener...")
         
         try:
-            for message in self.pubsub.listen():
+            # Use async for loop to iterate over messages
+            async for message in self.pubsub.listen():
                 if message['type'] == 'message':
                     await self._handle_message(message)
         except Exception as e:
-            logger.error(f"Error in Redis listener: {str(e)}")
+            logger.exception(f"Error in Redis listener: {str(e)}")
             # Attempt to reconnect
             await asyncio.sleep(5)
-            self._connect()
+            await self._connect()
             await self.listen()
     
     async def _handle_message(self, message):

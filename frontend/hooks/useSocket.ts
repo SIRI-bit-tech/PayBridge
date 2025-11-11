@@ -17,6 +17,12 @@ export function useSocket(options: UseSocketOptions = {}) {
   stableOptions.current = options
 
   const connect = useCallback(() => {
+    // Check if running in browser (avoid SSR issues)
+    if (typeof window === 'undefined') {
+      console.warn('Socket.IO connection skipped: not in browser environment')
+      return
+    }
+
     if (socketRef.current?.connected) {
       console.log('Socket already connected')
       return
@@ -90,14 +96,14 @@ export function useSocket(options: UseSocketOptions = {}) {
   }, [])
 
   useEffect(() => {
-    if (options.autoConnect !== false) {
+    if (stableOptions.current.autoConnect !== false) {
       connect()
     }
 
     return () => {
       disconnect()
     }
-  }, [connect, disconnect, options.autoConnect])
+  }, [connect, disconnect])
 
   return {
     isConnected,
