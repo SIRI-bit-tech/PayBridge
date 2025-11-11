@@ -8,6 +8,7 @@ from .models import Webhook, Transaction, AuditLog, WebhookEvent
 from .payment_handlers import get_payment_handler
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from .redis_pubsub import publish_transaction_new, publish_transaction_update
 import json
 import logging
 
@@ -26,6 +27,38 @@ def broadcast_to_user(user_id, event_type, data):
             }
         )
         logger.info(f"Broadcasted {event_type} to user {user_id}")
+
+
+def emit_socketio_transaction(user_id, transaction, is_new=True):
+    """
+    Emit transaction event via Redis pub/sub
+    This ensures all Socket.IO server instances receive the event
+    """
+    try:
+        transaction_data = {
+            'id': str(transaction.id),
+            'reference': transaction.reference,
+            'amount': float(transaction.amount),
+            'currency': transaction.currency,
+            'status': transaction.status,
+            'provider': transaction.provider,
+            'customer_email': transaction.customer_email,
+            'customer_name': transaction.metadata.get('customer_name', '') if transaction.metadata else '',
+            'description': transaction.description,
+            'fee': float(transaction.fee),
+            'net_amount': float(transaction.net_amount),
+            'created_at': transaction.created_at.isoformat(),
+        }
+        
+        # Publish to Redis - all Socket.IO instances will receive this
+        if is_new:
+            publish_transaction_new(user_id, transaction_data)
+        else:
+            publish_transaction_update(user_id, transaction_data)
+            
+        logger.info(f"Published transaction event to Redis for user {user_id}")
+    except Exception as e:
+        logger.error(f"Failed to publish transaction event to Redis: {str(e)}")
 
 
 @csrf_exempt
@@ -59,7 +92,10 @@ def paystack_webhook(request):
                     status='success'
                 )
                 
-                # Broadcast to user's dashboard
+                # Emit Socket.IO event for real-time updates
+                emit_socketio_transaction(transaction.user.id, transaction, is_new=True)
+                
+                # Broadcast to user's dashboard (legacy)
                 broadcast_to_user(
                     transaction.user.id,
                     'transaction_update',
@@ -117,7 +153,10 @@ def flutterwave_webhook(request):
                 status='success'
             )
             
-            # Broadcast to user's dashboard
+            # Emit Socket.IO event for real-time updates
+            emit_socketio_transaction(transaction.user.id, transaction, is_new=True)
+            
+            # Broadcast to user's dashboard (legacy)
             broadcast_to_user(
                 transaction.user.id,
                 'transaction_update',
@@ -179,7 +218,10 @@ def stripe_webhook(request):
                     status='success'
                 )
                 
-                # Broadcast to user's dashboard
+                # Emit Socket.IO event for real-time updates
+                emit_socketio_transaction(transaction.user.id, transaction, is_new=True)
+                
+                # Broadcast to user's dashboard (legacy)
                 broadcast_to_user(
                     transaction.user.id,
                     'transaction_update',
@@ -237,7 +279,10 @@ def chapa_webhook(request):
                 status='success'
             )
             
-            # Broadcast to user's dashboard
+            # Emit Socket.IO event for real-time updates
+            emit_socketio_transaction(transaction.user.id, transaction, is_new=True)
+            
+            # Broadcast to user's dashboard (legacy)
             broadcast_to_user(
                 transaction.user.id,
                 'transaction_update',
@@ -265,6 +310,67 @@ def chapa_webhook(request):
         return Response({'status': 'success'})
     except Exception as e:
         logger.error(f"Chapa webhook error: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mono_webhook(request):
+    """Mono payment webhook endpoint"""
+    try:
+        payload = request.body
+        signature = request.META.get('HTTP_X_MONO_SIGNATURE')
+        
+        handler = get_payment_handler('mono')
+        if not handler.verify_signature(payload, signature):
+            logger.warning("Invalid Mono webhook signature")
+            return Response({'error': 'Invalid signature'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        data = json.loads(payload)
+        logger.info(f"Received Mono webhook")
+        
+        transaction = handler.process_webhook(data)
+        
+        if transaction:
+            # Log webhook event
+            WebhookEvent.objects.create(
+                webhook=None,
+                event_type='payment.completed',
+                payload=data,
+                status='success'
+            )
+            
+            # Emit Socket.IO event for real-time updates
+            emit_socketio_transaction(transaction.user.id, transaction, is_new=True)
+            
+            # Broadcast to user's dashboard (legacy)
+            broadcast_to_user(
+                transaction.user.id,
+                'transaction_update',
+                {
+                    'id': str(transaction.id),
+                    'reference': transaction.reference,
+                    'amount': str(transaction.amount),
+                    'currency': transaction.currency,
+                    'status': transaction.status,
+                    'provider': transaction.provider,
+                    'created_at': transaction.created_at.isoformat(),
+                    'message': 'Payment completed successfully'
+                }
+            )
+            
+            # Trigger user webhooks
+            webhooks = Webhook.objects.filter(
+                user=transaction.user,
+                is_active=True,
+                event_types__contains='payment.completed'
+            )
+            for webhook in webhooks:
+                trigger_webhook(webhook, transaction)
+        
+        return Response({'status': 'success'})
+    except Exception as e:
+        logger.error(f"Mono webhook error: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

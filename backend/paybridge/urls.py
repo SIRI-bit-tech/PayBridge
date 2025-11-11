@@ -7,7 +7,7 @@ from rest_framework import permissions
 from api.graphql_view import AuthenticatedGraphQLView
 from api.webhook_views import (
     paystack_webhook, flutterwave_webhook, 
-    stripe_webhook, chapa_webhook
+    stripe_webhook, chapa_webhook, mono_webhook
 )
 from api.views import RegisterView
 
@@ -56,4 +56,5 @@ urlpatterns = [
     path('api/v1/webhooks/flutterwave/', flutterwave_webhook, name='flutterwave_webhook'),
     path('api/v1/webhooks/stripe/', stripe_webhook, name='stripe_webhook'),
     path('api/v1/webhooks/chapa/', chapa_webhook, name='chapa_webhook'),
+    path('api/v1/webhooks/mono/', mono_webhook, name='mono_webhook'),
 ]

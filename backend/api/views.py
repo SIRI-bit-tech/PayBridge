@@ -639,6 +639,7 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
 class WebhookViewSet(viewsets.ModelViewSet):
     serializer_class = WebhookSerializer
     permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']  # Fix CursorPagination ordering field
     
     def get_queryset(self):
         return Webhook.objects.filter(user=self.request.user)

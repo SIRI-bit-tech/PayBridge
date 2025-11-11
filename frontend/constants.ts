@@ -123,6 +123,23 @@ export const CURRENCIES = [
   { value: "CAD", label: "CAD - Canadian Dollar" },
 ]
 
+// Transaction status options
+export const TRANSACTION_STATUSES = [
+  { value: "completed", label: "Success" },
+  { value: "pending", label: "Pending" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+  { value: "cancelled", label: "Cancelled" },
+]
+
+// Filter currency options (subset for transactions)
+export const FILTER_CURRENCIES = [
+  { value: "NGN", label: "NGN" },
+  { value: "USD", label: "USD" },
+  { value: "GBP", label: "GBP" },
+  { value: "EUR", label: "EUR" },
+]
+
 // Developer type options for signup form
 export const DEVELOPER_TYPES = [
   { value: "individual", label: "Individual Developer" },
