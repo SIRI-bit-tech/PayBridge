@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useSocket } from './useSocket'
 import type { Transaction } from '@/types'
 
@@ -13,15 +13,21 @@ export function useTransactionsSocket(options: UseTransactionsSocketOptions = {}
     autoConnect: true,
   })
 
+  const optionsRef = useRef(options)
+
+  useEffect(() => {
+    optionsRef.current = options
+  }, [options])
+
   const handleTransactionNew = useCallback((data: Transaction) => {
     console.log('New transaction received:', data)
-    options.onTransactionNew?.(data)
-  }, [options])
+    optionsRef.current.onTransactionNew?.(data)
+  }, [])
 
   const handleTransactionUpdate = useCallback((data: Transaction) => {
     console.log('Transaction update received:', data)
-    options.onTransactionUpdate?.(data)
-  }, [options])
+    optionsRef.current.onTransactionUpdate?.(data)
+  }, [])
 
   useEffect(() => {
     if (isConnected) {
@@ -42,6 +48,7 @@ export function useTransactionsSocket(options: UseTransactionsSocketOptions = {}
       }
     }
   }, [isConnected, emit, on, off, handleTransactionNew, handleTransactionUpdate])
+}
 
   return { isConnected }
 }
