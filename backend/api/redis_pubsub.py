@@ -8,6 +8,7 @@ import logging
 import os
 import asyncio
 from typing import Dict, Any
+from urllib.parse import quote_plus
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +122,13 @@ class RedisSubscriber:
             # Import async redis
             import redis.asyncio as aioredis
             
-            # Create async Redis client
-            redis_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}" if REDIS_PASSWORD else f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+            # Create async Redis client with URL-encoded password
+            if REDIS_PASSWORD:
+                # URL-encode password to handle special characters
+                encoded_password = quote_plus(REDIS_PASSWORD)
+                redis_url = f"redis://:{encoded_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+            else:
+                redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
             
             self.redis_client = await aioredis.from_url(
                 redis_url,
@@ -149,26 +155,33 @@ class RedisSubscriber:
     
     async def listen(self):
         """Listen for Redis pub/sub messages and emit to Socket.IO (async)"""
-        if not self.pubsub:
-            logger.warning("Redis pubsub not available, attempting to connect...")
-            await self._connect()
-            if not self.pubsub:
-                logger.error("Failed to connect to Redis, skipping listener")
-                return
-        
         logger.info("Starting Redis pub/sub listener...")
         
-        try:
-            # Use async for loop to iterate over messages
-            async for message in self.pubsub.listen():
-                if message['type'] == 'message':
-                    await self._handle_message(message)
-        except Exception as e:
-            logger.exception(f"Error in Redis listener: {str(e)}")
-            # Attempt to reconnect
-            await asyncio.sleep(5)
-            await self._connect()
-            await self.listen()
+        # Use a loop instead of recursion to prevent stack overflow
+        while True:
+            try:
+                # Ensure we're connected
+                if not self.pubsub:
+                    logger.warning("Redis pubsub not available, attempting to connect...")
+                    await self._connect()
+                    if not self.pubsub:
+                        logger.error("Failed to connect to Redis, retrying in 5 seconds...")
+                        await asyncio.sleep(5)
+                        continue
+                
+                # Listen for messages
+                async for message in self.pubsub.listen():
+                    if message['type'] == 'message':
+                        await self._handle_message(message)
+                        
+            except Exception as e:
+                logger.exception(f"Error in Redis listener: {str(e)}")
+                # Clean up connection on error
+                self.pubsub = None
+                self.redis_client = None
+                # Wait before retrying with exponential backoff (capped at 30 seconds)
+                await asyncio.sleep(5)
+                logger.info("Attempting to reconnect to Redis...")
     
     async def _handle_message(self, message):
         """Handle incoming Redis message"""

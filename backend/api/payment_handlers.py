@@ -44,7 +44,8 @@ class PaystackHandler(PaymentHandler):
         """Verify Paystack webhook signature"""
         secret = secret or settings.PAYSTACK_SECRET_KEY
         computed = hmac.new(secret.encode(), payload, hashlib.sha512).hexdigest()
-        return computed == signature
+        # Use timing-safe comparison to prevent timing attacks
+        return hmac.compare_digest(computed, signature)
     
     def process_webhook(self, data):
         """Process Paystack webhook"""
@@ -62,6 +63,8 @@ class PaystackHandler(PaymentHandler):
     
     def initiate_payment(self, amount, email, reference, callback_url):
         """Initiate Paystack payment"""
+        timeout = getattr(settings, 'PAYSTACK_API_TIMEOUT', 10)  # Default 10 seconds
+        
         headers = {'Authorization': f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
         payload = {
             'amount': int(amount * 100),
@@ -73,7 +76,8 @@ class PaystackHandler(PaymentHandler):
         response = requests.post(
             'https://api.paystack.co/transaction/initialize',
             headers=headers,
-            json=payload
+            json=payload,
+            timeout=timeout
         )
         return response.json()
 
@@ -88,7 +92,8 @@ class FlutterwaveHandler(PaymentHandler):
         """Verify Flutterwave webhook signature"""
         secret = secret or settings.FLUTTERWAVE_SECRET_KEY
         computed = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-        return computed == signature
+        # Use timing-safe comparison to prevent timing attacks
+        return hmac.compare_digest(computed, signature)
     
     def process_webhook(self, data):
         """Process Flutterwave webhook"""
@@ -106,6 +111,8 @@ class FlutterwaveHandler(PaymentHandler):
     
     def initiate_payment(self, amount, email, reference, callback_url):
         """Initiate Flutterwave payment"""
+        timeout = getattr(settings, 'FLUTTERWAVE_API_TIMEOUT', 10)  # Default 10 seconds
+        
         headers = {'Authorization': f"Bearer {settings.FLUTTERWAVE_SECRET_KEY}"}
         payload = {
             'amount': amount,
@@ -117,7 +124,8 @@ class FlutterwaveHandler(PaymentHandler):
         response = requests.post(
             'https://api.flutterwave.com/v3/payments',
             headers=headers,
-            json=payload
+            json=payload,
+            timeout=timeout
         )
         return response.json()
 
@@ -226,7 +234,8 @@ class ChapaHandler(PaymentHandler):
         """Verify Chapa webhook signature"""
         secret = secret or settings.CHAPA_API_KEY
         computed = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-        return computed == signature
+        # Use timing-safe comparison to prevent timing attacks
+        return hmac.compare_digest(computed, signature)
     
     def process_webhook(self, data):
         """Process Chapa webhook"""
@@ -251,11 +260,21 @@ class MonoHandler(PaymentHandler):
     
     def verify_signature(self, payload, signature, secret=None):
         """Verify Mono webhook signature"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         secret = secret or getattr(settings, 'MONO_API_KEY', '')
         if not secret:
-            return True  # Skip verification if no secret configured
+            logger.error('Mono webhook signature verification failed: MONO_API_KEY not configured')
+            return False
+        
+        if not signature:
+            logger.error('Mono webhook signature verification failed: No signature provided')
+            return False
+        
         computed = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-        return computed == signature
+        # Use timing-safe comparison to prevent timing attacks
+        return hmac.compare_digest(computed, signature)
     
     def process_webhook(self, data):
         """Process Mono webhook"""
@@ -280,6 +299,8 @@ class MonoHandler(PaymentHandler):
     def initiate_payment(self, amount, email, reference, callback_url):
         """Initiate Mono payment"""
         api_key = getattr(settings, 'MONO_API_KEY', '')
+        timeout = getattr(settings, 'MONO_API_TIMEOUT', 10)  # Default 10 seconds
+        
         headers = {
             'Authorization': f"Bearer {api_key}",
             'Content-Type': 'application/json',
@@ -294,7 +315,8 @@ class MonoHandler(PaymentHandler):
         response = requests.post(
             'https://api.withmono.com/v1/payments/initiate',
             headers=headers,
-            json=payload
+            json=payload,
+            timeout=timeout
         )
         return response.json()
 
