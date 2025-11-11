@@ -28,7 +28,7 @@ export interface APIKeyActivity {
 }
 
 export interface WebSocketMessage {
-  type: 'api_key_created' | 'api_key_revoked' | 'api_key_used' | 'pong'
+  type: 'api_key_created' | 'api_key_revoked' | 'api_key_used' | 'transaction:new' | 'transaction:update' | 'pong'
   data?: any
 }
 
@@ -40,10 +40,26 @@ export interface Transaction {
   status: "pending" | "completed" | "failed" | "cancelled" | "refunded"
   provider: string
   customer_email: string
+  customer_name?: string
   description: string
   fee: number
   net_amount: number
   created_at: string
+}
+
+export interface TransactionSummary {
+  total_transactions: number
+  total_amount: number
+  successful_count: number
+  pending_count: number
+  failed_count: number
+  refunded_count: number
+}
+
+export interface FilterOptions {
+  provider: string
+  status: string
+  currency: string
 }
 
 export interface PaymentProvider {

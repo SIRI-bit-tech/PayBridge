@@ -1,8 +1,9 @@
 """
-Socket.IO server for real-time updates
+Socket.IO server for real-time updates with Redis adapter
 """
 import socketio
 import logging
+import os
 from django.conf import settings
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.models import User
@@ -10,13 +11,38 @@ from channels.db import database_sync_to_async
 
 logger = logging.getLogger(__name__)
 
-# Create Socket.IO server with async mode
-sio = socketio.AsyncServer(
-    async_mode='asgi',
-    cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS,
-    logger=True,
-    engineio_logger=True,
-)
+# Redis configuration
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+REDIS_DB = int(os.getenv('REDIS_DB', 0))
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+
+# Create Redis manager for Socket.IO
+redis_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}" if REDIS_PASSWORD else f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+try:
+    # Create Socket.IO server with Redis adapter for multi-server support
+    mgr = socketio.AsyncRedisManager(redis_url)
+    
+    sio = socketio.AsyncServer(
+        async_mode='asgi',
+        cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS,
+        logger=True,
+        engineio_logger=True,
+        client_manager=mgr,
+    )
+    
+    logger.info(f"Socket.IO server initialized with Redis adapter at {REDIS_HOST}:{REDIS_PORT}")
+except Exception as e:
+    logger.warning(f"Failed to initialize Redis adapter: {str(e)}. Falling back to in-memory mode.")
+    
+    # Fallback to in-memory mode if Redis is not available
+    sio = socketio.AsyncServer(
+        async_mode='asgi',
+        cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS,
+        logger=True,
+        engineio_logger=True,
+    )
 
 
 @database_sync_to_async
@@ -149,6 +175,43 @@ async def leave_dashboard(sid):
 
 
 @sio.event
+async def join_transactions(sid):
+    """Join transactions room for real-time updates"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            logger.warning(f"join_transactions failed for {sid}: No user_id in session")
+            return
+        
+        room = f"transactions_{user_id}"
+        sio.enter_room(sid, room)
+        logger.info(f"Client {sid} joined room: {room}")
+        
+        await sio.emit('joined_transactions', {'room': room}, room=sid)
+    except Exception as e:
+        logger.error(f"Error in join_transactions: {str(e)}")
+
+
+@sio.event
+async def leave_transactions(sid):
+    """Leave transactions room"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            return
+        
+        room = f"transactions_{user_id}"
+        sio.leave_room(sid, room)
+        logger.info(f"Client {sid} left room: {room}")
+    except Exception as e:
+        logger.error(f"Error in leave_transactions: {str(e)}")
+
+
+@sio.event
 async def ping(sid):
     """Handle ping from client"""
     await sio.emit('pong', room=sid)
@@ -188,3 +251,17 @@ async def emit_analytics_update(user_id, data):
     room = f"dashboard_{user_id}"
     await sio.emit('analytics_update', data, room=room)
     logger.info(f"Emitted analytics_update to room: {room}")
+
+
+async def emit_transaction_new(user_id, data):
+    """Emit new transaction event to user"""
+    room = f"transactions_{user_id}"
+    await sio.emit('transaction:new', data, room=room)
+    logger.info(f"Emitted transaction:new to room: {room}")
+
+
+async def emit_transaction_status_update(user_id, data):
+    """Emit transaction status update to user"""
+    room = f"transactions_{user_id}"
+    await sio.emit('transaction:update', data, room=room)
+    logger.info(f"Emitted transaction:update to room: {room}")
