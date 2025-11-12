@@ -38,14 +38,23 @@ async def start_billing_listener():
     except Exception as e:
         logger.exception(f"Billing listener error: {str(e)}")
 
+# Module-level list to keep references to background tasks
+_background_tasks = []
+
 # Schedule Redis listeners to start
 try:
     loop = asyncio.get_event_loop()
-    loop.create_task(start_redis_listener())
-    loop.create_task(start_billing_listener())
+    # Keep references to prevent garbage collection
+    redis_task = loop.create_task(start_redis_listener())
+    billing_task = loop.create_task(start_billing_listener())
+    _background_tasks.extend([redis_task, billing_task])
     logger.info("Redis listener tasks scheduled")
+except (KeyboardInterrupt, SystemExit):
+    # Allow system exits to propagate
+    raise
 except Exception as e:
-    logger.warning(f"Could not start Redis listeners: {str(e)}")
+    # Log with full exception info
+    logger.warning("Could not start Redis listeners", exc_info=e)
 
 # Wrap Django application with Socket.IO
 application = socketio.ASGIApp(

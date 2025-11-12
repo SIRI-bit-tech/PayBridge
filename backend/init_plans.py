@@ -65,7 +65,7 @@ plans_data = [
 ]
 
 for plan_data in plans_data:
-    plan, created = Plan.objects.get_or_create(
+    plan, created = Plan.objects.update_or_create(
         tier=plan_data['tier'],
         defaults=plan_data
     )
@@ -107,7 +107,7 @@ features_data = [
 ]
 
 for feature_data in features_data:
-    feature, created = Feature.objects.get_or_create(
+    feature, created = Feature.objects.update_or_create(
         code=feature_data['code'],
         defaults=feature_data
     )
