@@ -73,7 +73,24 @@ def retry_failed_payment(payment_attempt_id):
                 
             except Exception as e:
                 logger.error(f"Error upgrading subscription for payment {payment.payment_intent}: {str(e)}")
-                # Don't mark payment as success, let it retry
+                
+                # Check if max retries reached before retrying
+                if attempt.attempt_number >= 3:
+                    # Max retries reached - mark as failed
+                    attempt.status = 'failed'
+                    attempt.error_message = f'Subscription upgrade failed after max retries: {str(e)}'
+                    attempt.provider_response = {'error': str(e), 'max_retries_reached': True}
+                    attempt.save()
+                    
+                    # Also mark payment as failed
+                    payment.status = 'failed'
+                    payment.error_message = f'Subscription upgrade failed: {str(e)}'
+                    payment.save()
+                    
+                    logger.error(f"Payment {payment.payment_intent} failed permanently after max retries")
+                    return
+                
+                # Under retry limit - schedule retry
                 raise self.retry(exc=e, countdown=3600)  # Retry in 1 hour
         
         # Safely extract status and error from verification
