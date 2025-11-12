@@ -90,7 +90,15 @@ def retry_failed_payment(payment_attempt_id):
                     logger.error(f"Payment {payment.payment_intent} failed permanently after max retries")
                     return
                 
-                # Under retry limit - schedule retry
+                # Under retry limit - increment counter and schedule retry
+                attempt.attempt_number += 1
+                attempt.status = 'retrying'
+                attempt.error_message = str(e)
+                attempt.provider_response = {'error': str(e), 'retry_attempt': attempt.attempt_number}
+                attempt.retry_scheduled_for = timezone.now() + timedelta(hours=1)
+                attempt.save()
+                
+                logger.info(f"Scheduling retry {attempt.attempt_number} for payment {payment.payment_intent}")
                 retry_failed_payment.retry(exc=e, countdown=3600)  # Retry in 1 hour
                 return
         
