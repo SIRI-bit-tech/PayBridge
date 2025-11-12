@@ -1,8 +1,9 @@
 from django.contrib import admin
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction,
-    Webhook, Subscription, AuditLog
+    Webhook, AuditLog
 )
+from .billing_models import Plan, BillingSubscription, Payment, Feature
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -31,10 +32,30 @@ class WebhookAdmin(admin.ModelAdmin):
     list_display = ['user', 'url', 'is_active', 'last_triggered']
     search_fields = ['user__email', 'url']
 
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'plan', 'status', 'renewal_date']
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):
+    list_display = ['name', 'tier', 'price', 'api_limit', 'webhook_limit', 'is_active']
+    search_fields = ['name', 'tier']
+    list_filter = ['tier', 'is_active']
+
+@admin.register(BillingSubscription)
+class BillingSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'plan', 'status', 'renewal_date', 'created_at']
     search_fields = ['user__email']
+    list_filter = ['status', 'plan__tier']
+    readonly_fields = ['created_at', 'updated_at']
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['user', 'provider', 'amount', 'status', 'created_at']
+    search_fields = ['user__email', 'transaction_id', 'payment_intent']
+    list_filter = ['provider', 'status']
+    readonly_fields = ['created_at', 'updated_at', 'provider_response']
+
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'plan_tier_access']
+    search_fields = ['name', 'code']
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):

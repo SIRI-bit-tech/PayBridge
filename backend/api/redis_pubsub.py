@@ -265,3 +265,26 @@ def publish_api_key_revoked(user_id: int, api_key_data: Dict[str, Any]):
 def publish_api_key_used(user_id: int, api_key_data: Dict[str, Any]):
     """Publish API key used event"""
     redis_publisher.publish_api_key_event('used', user_id, api_key_data)
+
+
+def publish_event(channel: str, data: Dict[str, Any]):
+    """
+    Generic function to publish events to any Redis channel
+    Used by billing system and other modules
+    
+    Args:
+        channel: Redis channel name (e.g., 'billing_updates', 'billing_usage')
+        data: Event data dictionary
+    """
+    if not redis_publisher.redis_client:
+        logger.warning(f"Redis not available, skipping event publish to {channel}")
+        return
+    
+    try:
+        redis_publisher.redis_client.publish(
+            channel,
+            json.dumps(data)
+        )
+        logger.info(f"Published event to {channel}: {data.get('type', 'unknown')}")
+    except Exception as e:
+        logger.error(f"Failed to publish event to {channel}: {str(e)}")

@@ -294,3 +294,35 @@ GRAPHENE = {
         'graphene_django.debug.DjangoDebugMiddleware',
     ),
 }
+
+
+# ===========================
+# BILLING & PAYMENT PROVIDERS
+# ===========================
+
+# Paystack Configuration
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
+PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', default='')
+
+# Flutterwave Configuration
+FLUTTERWAVE_SECRET_KEY = config('FLUTTERWAVE_SECRET_KEY', default='')
+FLUTTERWAVE_PUBLIC_KEY = config('FLUTTERWAVE_PUBLIC_KEY', default='')
+FLUTTERWAVE_SECRET_HASH = config('FLUTTERWAVE_SECRET_HASH', default='')
+
+# Stripe Configuration
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+
+# Frontend URL for redirects
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
+
+# ===========================
+# REDIS CONFIGURATION
+# ===========================
+
+REDIS_HOST = config('REDIS_HOST', default='localhost')
+REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
+REDIS_DB = config('REDIS_DB', default=0, cast=int)
+REDIS_PASSWORD = config('REDIS_PASSWORD', default=None)

@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum, Count
 from datetime import timedelta
-from .models import Invoice, UsageMetric, APILog, Transaction, BillingPlan, Subscription
+from .models import Invoice, UsageMetric, APILog, Transaction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,25 +46,29 @@ class BillingService:
     
     @staticmethod
     def generate_invoice(user, billing_period_start, billing_period_end):
-        """Generate invoice for a billing period"""
-        subscription = user.subscription
-        plan = subscription.plan
+        """Generate invoice for a billing period - Uses new billing system"""
+        from .billing_models import BillingSubscription
+        
+        # Get user's billing subscription
+        try:
+            subscription = user.billing_subscription
+            plan = subscription.plan
+        except BillingSubscription.DoesNotExist:
+            logger.error(f"No billing subscription found for user {user.email}")
+            raise ValueError("User does not have a billing subscription")
         
         # Calculate usage
         usage = BillingService.calculate_monthly_usage(user, billing_period_start, billing_period_end)
         
-        # Get plan details
-        billing_plan = BillingPlan.objects.filter(name__icontains=plan).first()
-        
-        # Calculate charges
-        base_charge = Decimal(str(billing_plan.monthly_price)) if billing_plan else Decimal('0')
+        # Calculate charges based on plan
+        base_charge = Decimal(str(plan.price))
         
         # Add per-call overage charges if applicable
         overage_charge = Decimal('0')
-        if billing_plan and billing_plan.api_calls_limit:
-            if usage['api_calls'] > billing_plan.api_calls_limit:
-                overage_calls = usage['api_calls'] - billing_plan.api_calls_limit
-                overage_charge = Decimal(str(overage_calls)) * Decimal(str(billing_plan.per_call_cost))
+        if plan.api_limit and usage['api_calls'] > plan.api_limit:
+            overage_calls = usage['api_calls'] - plan.api_limit
+            # Charge $0.001 per overage call
+            overage_charge = Decimal(str(overage_calls)) * Decimal('0.001')
         
         total_amount = base_charge + overage_charge
         tax = total_amount * Decimal('0.1')  # 10% tax
@@ -76,7 +80,6 @@ class BillingService:
         
         invoice = Invoice.objects.create(
             user=user,
-            subscription=subscription,
             invoice_number=invoice_number,
             amount=total_amount,
             tax=tax,

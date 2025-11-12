@@ -1,6 +1,6 @@
 import type { Analytics } from "@/types"
 
-const API_BASE_URL_ENV = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"
+const API_BASE_URL_ENV = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api"
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 1000 // 1 second
 
@@ -423,4 +423,35 @@ export async function createStripeConnectPayment(data: any) {
       "Idempotency-Key": paymentData.idempotency_key,
     },
   })
+}
+
+
+// ===========================
+// BILLING & SUBSCRIPTION APIs
+// ===========================
+
+export async function getBillingPlan() {
+  return apiCall("/billing/plan/", { method: "GET" })
+}
+
+export async function createSubscription(planId: string, provider: string) {
+  return apiCall("/billing/subscribe/", {
+    method: "POST",
+    body: JSON.stringify({
+      plan_id: planId,
+      provider: provider,
+    }),
+  })
+}
+
+export async function cancelSubscription() {
+  return apiCall("/billing/cancel/", { method: "POST" })
+}
+
+export async function getUsage() {
+  return apiCall("/billing/usage/", { method: "GET" })
+}
+
+export async function getPaymentHistory() {
+  return apiCall("/billing/payments/", { method: "GET" })
 }

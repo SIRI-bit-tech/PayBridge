@@ -208,35 +208,7 @@ class Webhook(models.Model):
         return f"{self.user.email} - {self.url}"
 
 
-class Subscription(models.Model):
-    PLAN_CHOICES = (
-        ('starter', 'Starter'),
-        ('growth', 'Growth'),
-        ('enterprise', 'Enterprise'),
-    )
-    
-    STATUS_CHOICES = (
-        ('active', 'Active'),
-        ('cancelled', 'Cancelled'),
-        ('expired', 'Expired'),
-    )
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
-    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='starter')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    stripe_subscription_id = models.CharField(max_length=255, blank=True)
-    current_period_start = models.DateTimeField()
-    current_period_end = models.DateTimeField()
-    renewal_date = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'subscriptions'
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.plan}"
+
 
 
 class AuditLog(models.Model):
@@ -329,26 +301,7 @@ class APILog(models.Model):
         return f"{self.user.email} - {self.endpoint}"
 
 
-class BillingPlan(models.Model):
-    BILLING_TYPE_CHOICES = (
-        ('subscription', 'Subscription'),
-        ('pay_per_call', 'Pay Per Call'),
-    )
-    
-    name = models.CharField(max_length=100)
-    billing_type = models.CharField(max_length=20, choices=BILLING_TYPE_CHOICES)
-    monthly_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    api_calls_limit = models.IntegerField(null=True, blank=True)  # None = unlimited
-    transaction_limit = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    per_call_cost = models.DecimalField(max_digits=10, decimal_places=4, default=0)
-    features = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'billing_plans'
-    
-    def __str__(self):
-        return self.name
+
 
 
 class Invoice(models.Model):
@@ -362,7 +315,7 @@ class Invoice(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invoices')
-    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)
+    # subscription field removed - use billing_models.BillingSubscription if needed
     invoice_number = models.CharField(max_length=50, unique=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     amount = models.DecimalField(max_digits=15, decimal_places=2)

@@ -10,6 +10,14 @@ pip install daphne
 
 # Run the server
 daphne -b 0.0.0.0 -p 8000 paybridge.asgi:application
+
+# Populates plans (ONE TIME)
+python init_plans.py          
+
+#Run celery 
+celery -A paybridge worker --loglevel=info --pool=solo
+
+celery -A paybridge beat --loglevel=info
 ```
 
 ## Option 2: Using Uvicorn
