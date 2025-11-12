@@ -57,8 +57,11 @@ class FeatureAccessMiddleware:
         if request.user.is_authenticated:
             # Analytics endpoints
             if request.path.startswith('/api/analytics/'):
-                subscription = request.user.billing_subscription
-                if not subscription.plan.has_analytics:
+                # Safely retrieve subscription
+                subscription = getattr(request.user, 'billing_subscription', None)
+                
+                # Check if subscription exists and has analytics access
+                if subscription is None or not subscription.plan.has_analytics:
                     return JsonResponse({
                         'error': 'Feature not available',
                         'message': 'Analytics is not available in your current plan. Please upgrade.',

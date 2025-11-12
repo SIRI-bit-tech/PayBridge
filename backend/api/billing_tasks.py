@@ -45,29 +45,57 @@ def retry_failed_payment(payment_attempt_id):
         verification = provider.verify_payment(payment.payment_intent)
         
         if verification['success']:
-            # Payment was successful, update records
-            attempt.status = 'success'
-            attempt.provider_response = verification.get('raw_response', {})
-            attempt.save()
-            
-            payment.status = 'success'
-            payment.completed_at = timezone.now()
-            payment.provider_response = verification.get('raw_response', {})
-            payment.save()
-            
-            # Upgrade subscription
-            BillingSubscriptionService.confirm_payment_and_upgrade(
-                payment.payment_intent,
-                payment.provider
-            )
-            
-            logger.info(f"Payment {payment.payment_intent} was already successful")
-            return
+            # Payment was successful - confirm upgrade FIRST before marking as success
+            try:
+                # Upgrade subscription (this checks if payment is already "success" and short-circuits)
+                result = BillingSubscriptionService.confirm_payment_and_upgrade(
+                    payment.payment_intent,
+                    payment.provider
+                )
+                
+                if not result.get('success'):
+                    logger.error(f"Subscription upgrade failed for payment {payment.payment_intent}: {result.get('error')}")
+                    # Don't mark as success, retry later
+                    raise Exception(result.get('error', 'Subscription upgrade failed'))
+                
+                # Only after successful upgrade, mark payment and attempt as successful
+                attempt.status = 'success'
+                attempt.provider_response = verification.get('raw_response', {})
+                attempt.save()
+                
+                payment.status = 'success'
+                payment.completed_at = timezone.now()
+                payment.provider_response = verification.get('raw_response', {})
+                payment.save()
+                
+                logger.info(f"Payment {payment.payment_intent} processed and subscription upgraded successfully")
+                return
+                
+            except Exception as e:
+                logger.error(f"Error upgrading subscription for payment {payment.payment_intent}: {str(e)}")
+                # Don't mark payment as success, let it retry
+                raise self.retry(exc=e, countdown=3600)  # Retry in 1 hour
         
-        # If still pending or failed, schedule another retry
-        if verification['status'] in ['pending', 'processing']:
+        # Safely extract status and error from verification
+        status = verification.get('status')
+        error = verification.get('error')
+        
+        # Derive concrete status if missing
+        if status is None:
+            if error:
+                # Check for transient errors that should be retried
+                transient_errors = ['timeout', 'network', 'connection', 'unavailable', 'rate limit']
+                is_transient = any(keyword in str(error).lower() for keyword in transient_errors)
+                status = 'pending' if is_transient else 'failed'
+            else:
+                status = 'failed'
+        
+        # If still pending or processing, schedule another retry
+        if status in ['pending', 'processing']:
             attempt.attempt_number += 1
             attempt.retry_scheduled_for = timezone.now() + timedelta(hours=2)
+            if error:
+                attempt.error_message = str(error)
             attempt.save()
             
             # Schedule next retry
@@ -80,14 +108,14 @@ def retry_failed_payment(payment_attempt_id):
         else:
             # Payment failed permanently
             attempt.status = 'failed'
-            attempt.error_message = verification.get('error', 'Payment failed')
+            attempt.error_message = error or 'Payment failed'
             attempt.save()
             
             payment.status = 'failed'
-            payment.error_message = verification.get('error', 'Payment failed')
+            payment.error_message = error or 'Payment failed'
             payment.save()
             
-            logger.error(f"Payment {payment.payment_intent} failed permanently")
+            logger.error(f"Payment {payment.payment_intent} failed permanently: {error}")
         
     except PaymentAttempt.DoesNotExist:
         logger.error(f"Payment attempt {payment_attempt_id} not found")

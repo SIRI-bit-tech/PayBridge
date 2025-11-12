@@ -60,10 +60,15 @@ export default function BillingPage() {
     },
     onUsageUpdate: (data) => {
       console.log("Usage updated:", data)
-      setUsage((prev) => ({
-        ...prev!,
-        ...data,
-      }))
+      setUsage((prev) => {
+        // Handle null/undefined prev - return data directly if no previous state
+        if (!prev) return data
+        // Otherwise merge previous state with new data
+        return {
+          ...prev,
+          ...data,
+        }
+      })
     },
     onLimitReached: (data) => {
       console.log("Limit reached:", data)

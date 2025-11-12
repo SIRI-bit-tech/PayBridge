@@ -237,13 +237,35 @@ class BillingSubscriptionService:
             # Update payment status
             payment.status = 'success'
             payment.completed_at = timezone.now()
-            payment.provider_response = verification.get('raw_response', {})
+            raw_response = verification.get('raw_response', {})
+            payment.provider_response = raw_response
             payment.save()
             
-            # Get plan from payment metadata
-            plan_id = payment.provider_response.get('metadata', {}).get('plan_id')
+            # Safely extract and normalize metadata
+            metadata = {}
+            raw_metadata = raw_response.get('metadata', {})
+            
+            # Handle metadata that might be a string, empty string, or dict
+            if isinstance(raw_metadata, str):
+                if raw_metadata:
+                    try:
+                        import json
+                        metadata = json.loads(raw_metadata)
+                    except (json.JSONDecodeError, ValueError):
+                        logger.warning(f"Failed to parse metadata string: {raw_metadata}")
+                        metadata = {}
+                else:
+                    metadata = {}
+            elif isinstance(raw_metadata, dict):
+                metadata = raw_metadata
+            else:
+                metadata = {}
+            
+            # Get plan_id from normalized metadata
+            plan_id = metadata.get('plan_id')
+            
             if not plan_id:
-                # Try to get from payment record
+                # Fallback: Try to get from payment record
                 plan_id = payment.subscription.plan_id if payment.subscription else None
             
             if not plan_id:

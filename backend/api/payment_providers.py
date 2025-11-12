@@ -110,19 +110,27 @@ class PaystackProvider(PaymentProviderBase):
             response.raise_for_status()
             data = response.json()
             
-            if data.get('status') and data['data']['status'] == 'success':
+            # Safely extract payload - Paystack may return data as None when status is false
+            payload = data.get('data') or {}
+            
+            # Check both that status is True and payload is truthy
+            if data.get('status') and payload and payload.get('status') == 'success':
+                # Safely get amount and convert to Decimal
+                amount_kobo = payload.get('amount')
+                amount = Decimal(str(amount_kobo)) / 100 if amount_kobo else Decimal('0')
+                
                 return {
                     'success': True,
-                    'amount': Decimal(str(data['data']['amount'])) / 100,
-                    'currency': data['data']['currency'],
-                    'reference': data['data']['reference'],
+                    'amount': amount,
+                    'currency': payload.get('currency', 'NGN'),
+                    'reference': payload.get('reference', reference),
                     'status': 'success',
-                    'raw_response': data['data']
+                    'raw_response': payload
                 }
             else:
                 return {
                     'success': False,
-                    'status': data['data'].get('status', 'failed'),
+                    'status': payload.get('status', 'failed') if payload else 'failed',
                     'error': data.get('message', 'Payment verification failed')
                 }
                 
@@ -130,7 +138,8 @@ class PaystackProvider(PaymentProviderBase):
             logger.error(f"Paystack verification error: {str(e)}")
             return {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'status': 'failed'
             }
     
     def verify_webhook_signature(self, payload, signature):
@@ -222,19 +231,27 @@ class FlutterwaveProvider(PaymentProviderBase):
             response.raise_for_status()
             data = response.json()
             
-            if data.get('status') == 'success' and data['data']['status'] == 'successful':
+            # Safely extract payload - Flutterwave may return error without data object
+            payload = data.get('data')
+            
+            # Check both that status is 'success' and payload exists
+            if data.get('status') == 'success' and payload and payload.get('status') == 'successful':
+                # Safely get amount and convert to Decimal
+                amount_value = payload.get('amount')
+                amount = Decimal(str(amount_value)) if amount_value else Decimal('0')
+                
                 return {
                     'success': True,
-                    'amount': Decimal(str(data['data']['amount'])),
-                    'currency': data['data']['currency'],
-                    'reference': data['data']['tx_ref'],
+                    'amount': amount,
+                    'currency': payload.get('currency', 'NGN'),
+                    'reference': payload.get('tx_ref', reference),
                     'status': 'success',
-                    'raw_response': data['data']
+                    'raw_response': payload
                 }
             else:
                 return {
                     'success': False,
-                    'status': data['data'].get('status', 'failed'),
+                    'status': payload.get('status', 'failed') if payload else data.get('status', 'failed'),
                     'error': data.get('message', 'Payment verification failed')
                 }
                 

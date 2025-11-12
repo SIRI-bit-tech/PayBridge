@@ -22,7 +22,7 @@ class BillingRedisListener:
     async def connect(self):
         """Connect to Redis"""
         try:
-            self.redis_client = await aioredis.from_url(
+            self.redis_client = aioredis.from_url(
                 f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}",
                 password=settings.REDIS_PASSWORD,
                 decode_responses=True
