@@ -91,7 +91,8 @@ def retry_failed_payment(payment_attempt_id):
                     return
                 
                 # Under retry limit - schedule retry
-                raise self.retry(exc=e, countdown=3600)  # Retry in 1 hour
+                retry_failed_payment.retry(exc=e, countdown=3600)  # Retry in 1 hour
+                return
         
         # Safely extract status and error from verification
         status = verification.get('status')
