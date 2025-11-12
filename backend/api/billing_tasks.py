@@ -74,8 +74,8 @@ def retry_failed_payment(payment_attempt_id):
             except Exception as e:
                 logger.error(f"Error upgrading subscription for payment {payment.payment_intent}: {str(e)}")
                 # Don't mark payment as success, let it retry
-                raise self.retry(exc=e, countdown=3600)  # Retry in 1 hour
-        
+                retry_failed_payment.retry(exc=e, countdown=3600)  # Retry in 1 hour
+                return
         # Safely extract status and error from verification
         status = verification.get('status')
         error = verification.get('error')
