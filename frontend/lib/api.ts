@@ -277,6 +277,34 @@ export async function verifyPayment(transactionId: string) {
   return apiCall(`/transactions/${transactionId}/verify_payment/`)
 }
 
+// Unified Payment Gateway - Single API for all providers
+export async function createUnifiedPayment(data: {
+  amount: number
+  currency: string
+  customer_email: string
+  callback_url: string
+  provider?: string
+  description?: string
+  metadata?: Record<string, any>
+}) {
+  const paymentData = {
+    ...data,
+    idempotency_key: generateIdempotentKey(),
+  }
+
+  return apiCall("/transactions/pay/", {
+    method: "POST",
+    body: JSON.stringify(paymentData),
+    headers: {
+      "Idempotency-Key": paymentData.idempotency_key,
+    },
+  })
+}
+
+export async function verifyUnifiedPayment(transactionId: string) {
+  return apiCall(`/transactions/${transactionId}/verify/`)
+}
+
 export async function getWebhooks() {
   return apiCall("/webhooks/")
 }

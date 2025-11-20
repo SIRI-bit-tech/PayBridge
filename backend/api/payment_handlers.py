@@ -61,13 +61,14 @@ class PaystackHandler(PaymentHandler):
                 return trans
         return None
     
-    def initiate_payment(self, amount, email, reference, callback_url):
+    def initiate_payment(self, amount, email, reference, callback_url, secret_key=None):
         """Initiate Paystack payment"""
         timeout = getattr(settings, 'PAYSTACK_API_TIMEOUT', 10)  # Default 10 seconds
+        api_key = secret_key or getattr(settings, 'PAYSTACK_SECRET_KEY', '')
         
-        headers = {'Authorization': f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+        headers = {'Authorization': f"Bearer {api_key}"}
         payload = {
-            'amount': int(amount * 100),
+            'amount': int(float(amount) * 100),  # Convert to kobo
             'email': email,
             'reference': reference,
             'callback_url': callback_url,
@@ -109,16 +110,18 @@ class FlutterwaveHandler(PaymentHandler):
                 return trans
         return None
     
-    def initiate_payment(self, amount, email, reference, callback_url):
+    def initiate_payment(self, amount, email, reference, callback_url, secret_key=None):
         """Initiate Flutterwave payment"""
         timeout = getattr(settings, 'FLUTTERWAVE_API_TIMEOUT', 10)  # Default 10 seconds
+        api_key = secret_key or getattr(settings, 'FLUTTERWAVE_SECRET_KEY', '')
         
-        headers = {'Authorization': f"Bearer {settings.FLUTTERWAVE_SECRET_KEY}"}
+        headers = {'Authorization': f"Bearer {api_key}"}
         payload = {
-            'amount': amount,
+            'amount': float(amount),
             'email': email,
             'tx_ref': reference,
             'redirect_url': callback_url,
+            'currency': 'NGN'
         }
         
         response = requests.post(
@@ -296,9 +299,9 @@ class MonoHandler(PaymentHandler):
                 return trans
         return None
     
-    def initiate_payment(self, amount, email, reference, callback_url):
+    def initiate_payment(self, amount, email, reference, callback_url, secret_key=None):
         """Initiate Mono payment"""
-        api_key = getattr(settings, 'MONO_API_KEY', '')
+        api_key = secret_key or getattr(settings, 'MONO_API_KEY', '')
         timeout = getattr(settings, 'MONO_API_TIMEOUT', 10)  # Default 10 seconds
         
         headers = {
@@ -306,7 +309,7 @@ class MonoHandler(PaymentHandler):
             'Content-Type': 'application/json',
         }
         payload = {
-            'amount': amount,
+            'amount': float(amount),
             'email': email,
             'reference': reference,
             'callback_url': callback_url,

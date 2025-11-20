@@ -11,6 +11,7 @@ import {
   BarChart3,
   Receipt,
   Settings,
+  Zap,
 } from "lucide-react"
 
 export function Sidebar() {
@@ -20,6 +21,7 @@ export function Sidebar() {
 
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/unified-payment", label: "Unified Payment", icon: Zap },
     { href: "/api-keys", label: "API Keys", icon: KeyRound },
     { href: "/transactions", label: "Transactions", icon: CreditCard },
     { href: "/payment-providers", label: "Providers", icon: Building2 },

@@ -33,6 +33,7 @@ from .analytics_service import AnalyticsService
 from .billing_service import BillingService
 from .payment_service import PaymentService
 from .exceptions import KYCVerificationFailed, InvalidAPIKey
+from .unified_payment_gateway import UnifiedPaymentGateway
 # process_transaction_webhook moved to webhook_tasks.py
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -509,9 +510,89 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user).select_related('api_key')
     
+    @action(detail=False, methods=['post'], url_path='pay')
+    def unified_payment(self, request):
+        """
+        🎯 UNIFIED PAYMENT ENDPOINT - The core feature of PayBridge
+        Single API for all payment providers - developers don't need provider-specific code
+        
+        POST /api/v1/transactions/pay/
+        {
+            "amount": 1500,
+            "currency": "NGN",
+            "customer_email": "customer@example.com",
+            "callback_url": "https://yourapp.com/callback",
+            "provider": "paystack",  // Optional - auto-selects if not provided
+            "description": "Product purchase",
+            "api_key": "pk_live_xxxxx",  // Optional
+            "idempotency_key": "unique-key"  // Optional - prevents duplicate charges
+        }
+        """
+        amount = request.data.get('amount')
+        currency = request.data.get('currency', 'NGN')
+        customer_email = request.data.get('customer_email')
+        callback_url = request.data.get('callback_url')
+        provider = request.data.get('provider')  # Optional
+        description = request.data.get('description', '')
+        metadata = request.data.get('metadata', {})
+        api_key = request.data.get('api_key')
+        idempotency_key = request.data.get('idempotency_key')
+        
+        # Validate required fields
+        if not amount or not customer_email or not callback_url:
+            return Response({
+                'success': False,
+                'error': 'amount, customer_email, and callback_url are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Use unified payment gateway
+            result = UnifiedPaymentGateway.create_payment(
+                user=request.user,
+                amount=amount,
+                currency=currency,
+                customer_email=customer_email,
+                callback_url=callback_url,
+                provider=provider,
+                description=description,
+                metadata=metadata,
+                api_key=api_key,
+                idempotency_key=idempotency_key
+            )
+            
+            if result.get('success'):
+                return Response(result, status=status.HTTP_201_CREATED)
+            else:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        
+        except InvalidAPIKey as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logger.error(f"Unified payment error: {str(e)}", exc_info=True)
+            return Response({
+                'success': False,
+                'error': 'An unexpected error occurred'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['get'], url_path='verify')
+    def verify_unified_payment(self, request, pk=None):
+        """Verify payment status using unified gateway"""
+        result = UnifiedPaymentGateway.verify_payment(request.user, pk)
+        
+        if result.get('success'):
+            return Response(result)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+    
     @action(detail=False, methods=['post'])
     def initiate_payment(self, request):
-        """Initiate payment with idempotency key to prevent double charging"""
+        """
+        Legacy endpoint - kept for backward compatibility
+        Use /pay/ endpoint instead for unified payment interface
+        """
         api_key_id = request.data.get('api_key_id')
         provider = request.data.get('provider')
         amount = request.data.get('amount')
