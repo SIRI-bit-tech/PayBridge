@@ -21,10 +21,9 @@ def create_user_profile(sender, instance, created, **kwargs):
             BillingSubscriptionService.assign_free_plan_to_user(instance)
             logger.info(f"Assigned free billing plan to user {instance.email}")
         except Exception as e:
-            # Log full traceback for debugging
+            # Log error but don't fail user registration if billing setup fails
             logger.exception(f"Failed to assign free plan to user {instance.email}: {str(e)}")
-            # Re-raise to surface the error to callers/monitoring
-            raise
+            # User can still register, billing can be set up later
 
 
 @receiver(post_save, sender=User)

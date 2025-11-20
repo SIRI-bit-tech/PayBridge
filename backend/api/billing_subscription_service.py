@@ -16,14 +16,24 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Redis connection for usage tracking
-redis_client = redis.Redis(
-    host=settings.REDIS_HOST,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB,
-    password=settings.REDIS_PASSWORD,
-    decode_responses=True
-)
+# Redis connection for usage tracking with connection pooling and timeouts
+def get_redis_client():
+    """Get Redis client with proper error handling"""
+    try:
+        return redis.Redis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            db=settings.REDIS_DB,
+            password=settings.REDIS_PASSWORD,
+            decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+            retry_on_timeout=True,
+            health_check_interval=30
+        )
+    except Exception as e:
+        logger.warning(f"Failed to create Redis client: {e}")
+        return None
 
 
 class BillingSubscriptionService:
@@ -103,15 +113,20 @@ class BillingSubscriptionService:
             }
         )
         
-        # Also store in Redis for fast access
-        redis_key = f"usage:{subscription.user.id}:{now.strftime('%Y-%m')}"
+        # Also store in Redis for fast access (optional - don't fail if Redis is down)
         if created:
-            redis_client.hset(redis_key, mapping={
-                'api_calls': 0,
-                'webhooks': 0,
-                'analytics': 0,
-            })
-            redis_client.expire(redis_key, 60 * 60 * 24 * 35)  # 35 days
+            try:
+                redis_client = get_redis_client()
+                if redis_client:
+                    redis_key = f"usage:{subscription.user.id}:{now.strftime('%Y-%m')}"
+                    redis_client.hset(redis_key, mapping={
+                        'api_calls': 0,
+                        'webhooks': 0,
+                        'analytics': 0,
+                    })
+                    redis_client.expire(redis_key, 60 * 60 * 24 * 35)  # 35 days
+            except Exception as e:
+                logger.warning(f"Failed to store usage in Redis: {e}")
         
         return usage
     
