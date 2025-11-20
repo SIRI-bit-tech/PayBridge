@@ -239,6 +239,56 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Quick Actions */}
+      <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a
+              href="/unified-payment"
+              className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-semibold">Create Payment</div>
+                <div className="text-sm text-muted-foreground">Unified gateway</div>
+              </div>
+            </a>
+            <a
+              href="/transactions"
+              className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Activity className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <div className="font-semibold">View Transactions</div>
+                <div className="text-sm text-muted-foreground">All payments</div>
+              </div>
+            </a>
+            <a
+              href="/analytics"
+              className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <Activity className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <div className="font-semibold">View Analytics</div>
+                <div className="text-sm text-muted-foreground">Insights & reports</div>
+              </div>
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Recent Transactions */}
       <RecentTransactions />
 

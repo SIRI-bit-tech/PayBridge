@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import { getTransactions } from "@/lib/api"
 import { useTransactionsSocket } from "@/hooks/useTransactionsSocket"
 import { TransactionSummary } from "@/components/transactions/TransactionSummary"
@@ -130,7 +132,15 @@ export default function TransactionsPage() {
           <h1 className="text-3xl font-bold text-foreground">Transactions</h1>
           <p className="text-neutral-400">Real-time transaction monitoring and analytics</p>
         </div>
-        <RealTimeIndicator isConnected={isConnected} />
+        <div className="flex items-center gap-4">
+          <RealTimeIndicator isConnected={isConnected} />
+          <Button asChild>
+            <a href="/unified-payment">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Payment
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
