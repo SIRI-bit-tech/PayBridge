@@ -16,23 +16,45 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Redis connection for usage tracking with connection pooling and timeouts
+# Redis connection singleton with connection pooling
+_redis_client = None
+_redis_pool = None
+
 def get_redis_client():
-    """Get Redis client with proper error handling"""
+    """Get Redis client singleton with proper error handling and connection validation"""
+    global _redis_client, _redis_pool
+    
+    if _redis_client is not None:
+        return _redis_client
+    
     try:
-        return redis.Redis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            db=settings.REDIS_DB,
-            password=settings.REDIS_PASSWORD,
-            decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
-            retry_on_timeout=True,
-            health_check_interval=30
-        )
+        # Create connection pool once
+        if _redis_pool is None:
+            _redis_pool = redis.ConnectionPool(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                db=settings.REDIS_DB,
+                password=settings.REDIS_PASSWORD,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5,
+                retry_on_timeout=True,
+                health_check_interval=30,
+                max_connections=10
+            )
+        
+        # Create client with the pool
+        _redis_client = redis.Redis(connection_pool=_redis_pool)
+        
+        # Validate connection with ping
+        _redis_client.ping()
+        logger.info("Redis connection established successfully")
+        return _redis_client
+        
     except Exception as e:
-        logger.warning(f"Failed to create Redis client: {e}")
+        logger.warning(f"Failed to connect to Redis: {e}")
+        _redis_client = None
+        _redis_pool = None
         return None
 
 
@@ -114,19 +136,23 @@ class BillingSubscriptionService:
         )
         
         # Also store in Redis for fast access (optional - don't fail if Redis is down)
-        if created:
-            try:
-                redis_client = get_redis_client()
-                if redis_client:
-                    redis_key = f"usage:{subscription.user.id}:{now.strftime('%Y-%m')}"
+        # Always attempt to ensure Redis key exists (backfill if missing)
+        try:
+            redis_client = get_redis_client()
+            if redis_client:
+                redis_key = f"usage:{subscription.user.id}:{now.strftime('%Y-%m')}"
+                
+                # Check if key exists, if not create it
+                if not redis_client.exists(redis_key):
                     redis_client.hset(redis_key, mapping={
                         'api_calls': 0,
                         'webhooks': 0,
                         'analytics': 0,
                     })
                     redis_client.expire(redis_key, 60 * 60 * 24 * 35)  # 35 days
-            except Exception as e:
-                logger.warning(f"Failed to store usage in Redis: {e}")
+                    logger.debug(f"Created Redis usage key for user {subscription.user.id}")
+        except Exception as e:
+            logger.warning(f"Failed to store usage in Redis: {e}")
         
         return usage
     
