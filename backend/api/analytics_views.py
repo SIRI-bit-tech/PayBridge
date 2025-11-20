@@ -5,7 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from .models import Transaction, Webhook, APILog
+from .models import Transaction, APILog
+from .webhook_models import WebhookSubscription
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,14 +23,23 @@ class AnalyticsViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         
         # Webhook delivery rate (last 24 hours)
-        webhooks_sent = Webhook.objects.filter(
+        # Use new webhook system
+        active_webhooks = WebhookSubscription.objects.filter(
             user=user,
-            last_triggered__gte=timezone.now() - timedelta(hours=24)
+            active=True
         ).count()
         
-        # For webhook success rate, we'd need to track delivery status
-        # For now, we'll use a simulated rate based on active webhooks
-        webhook_delivery_rate = 98.5 if webhooks_sent > 0 else 100.0
+        # Calculate delivery rate from webhook subscriptions
+        total_deliveries = sum([
+            ws.success_count + ws.failure_count 
+            for ws in WebhookSubscription.objects.filter(user=user)
+        ])
+        successful_deliveries = sum([
+            ws.success_count 
+            for ws in WebhookSubscription.objects.filter(user=user)
+        ])
+        
+        webhook_delivery_rate = (successful_deliveries / total_deliveries * 100) if total_deliveries > 0 else 100.0
         
         # Average response time from API logs
         api_logs = APILog.objects.filter(

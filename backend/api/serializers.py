@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction, 
-    Webhook, AuditLog, KYCVerification,
-    Invoice, UsageMetric, WebhookEvent, CURRENCY_CHOICES
+    AuditLog, KYCVerification,
+    Invoice, UsageMetric, CURRENCY_CHOICES
 )
 import phonenumbers
 
@@ -159,11 +159,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'reference', 'fee', 'net_amount', 'created_at']
 
 
-class WebhookSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Webhook
-        fields = ['id', 'url', 'event_types', 'is_active', 'last_triggered', 'created_at']
-        read_only_fields = ['id', 'created_at']
+# WebhookSerializer moved to webhook_serializers.py
 
 
 
@@ -196,8 +192,4 @@ class UsageMetricSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'api_calls', 'transaction_volume', 'data_transferred_mb', 'cost']
 
 
-class WebhookEventSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WebhookEvent
-        fields = ['id', 'event_type', 'status', 'response_status_code', 'attempt', 'created_at']
-        read_only_fields = ['id', 'created_at']
+# WebhookEventSerializer moved to webhook_serializers.py

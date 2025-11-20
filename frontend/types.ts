@@ -71,6 +71,90 @@ export interface PaymentProvider {
   webhook_url?: string
 }
 
+// Webhook Types
+export interface WebhookSubscription {
+  id: string
+  url: string
+  masked_secret: string
+  selected_events: string[]
+  active: boolean
+  health_status: 'healthy' | 'degraded' | 'failing' | 'disabled'
+  last_delivery_at: string | null
+  failure_count: number
+  success_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookEvent {
+  id: string
+  provider: 'paystack' | 'flutterwave' | 'stripe' | 'mono'
+  provider_event_id: string
+  canonical_event_type: string
+  raw_payload: any
+  signature_valid: boolean
+  received_at: string
+  processed_at: string | null
+  processing_status: 'pending' | 'processing' | 'succeeded' | 'failed'
+  processing_error: string
+  created_at: string
+}
+
+export interface WebhookDeliveryLog {
+  id: string
+  webhook_subscription: string
+  webhook_url: string
+  webhook_event: string | null
+  event_id: string
+  event_type: string
+  attempt_number: number
+  status: 'pending' | 'success' | 'failed' | 'dead_letter'
+  http_status_code: number | null
+  response_body: string
+  latency_ms: number | null
+  error_message: string
+  next_retry_at: string | null
+  created_at: string
+}
+
+export interface WebhookDeliveryMetrics {
+  id: string
+  webhook_subscription: string
+  period_start: string
+  period_end: string
+  total_deliveries: number
+  successful_deliveries: number
+  failed_deliveries: number
+  retry_count: number
+  dead_letter_count: number
+  avg_latency_ms: number
+  p95_latency_ms: number
+  p99_latency_ms: number
+  success_rate: number
+}
+
+export interface WebhookDashboard {
+  total_subscriptions: number
+  active_subscriptions: number
+  total_deliveries_24h: number
+  successful_deliveries_24h: number
+  failed_deliveries_24h: number
+  dead_letter_deliveries_24h: number
+  success_rate: number
+  avg_latency_ms: number
+  failing_endpoints: Array<{
+    url: string
+    last_delivery_status: string
+    failure_count: number
+  }>
+}
+
+export interface AvailableWebhookEvent {
+  type: string
+  description: string
+}
+
+// Legacy webhook type (deprecated)
 export interface Webhook {
   id: string
   url: string

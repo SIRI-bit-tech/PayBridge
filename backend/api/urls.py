@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     UserProfileViewSet, APIKeyViewSet, PaymentProviderViewSet,
-    TransactionViewSet, WebhookViewSet,
+    TransactionViewSet,
     KYCViewSet, AnalyticsViewSet, BillingViewSet, AuditLogViewSet,
     LoginView, RegisterView, PasswordResetRequestView, PasswordResetConfirmView
 )
@@ -11,8 +11,13 @@ from .settlement_views import SettlementViewSet
 from .analytics_views import AnalyticsViewSet as SystemAnalyticsViewSet
 from .billing_views import (
     get_billing_plan, create_subscription, cancel_subscription,
-    get_usage, get_payment_history,
-    webhook_paystack, webhook_flutterwave, webhook_stripe
+    get_usage, get_payment_history
+)
+from .webhook_management_views import (
+    WebhookSubscriptionViewSet, WebhookEventViewSet, WebhookDeliveryLogViewSet
+)
+from .webhook_receiver import (
+    webhook_paystack, webhook_flutterwave, webhook_stripe, webhook_mono
 )
 
 router = DefaultRouter()
@@ -20,7 +25,9 @@ router.register(r'profile', UserProfileViewSet, basename='profile')
 router.register(r'api-keys', APIKeyViewSet, basename='api-key')
 router.register(r'payment-providers', PaymentProviderViewSet, basename='payment-provider')
 router.register(r'transactions', TransactionViewSet, basename='transaction')
-router.register(r'webhooks', WebhookViewSet, basename='webhook')
+router.register(r'webhook-subscriptions', WebhookSubscriptionViewSet, basename='webhook-subscription')
+router.register(r'webhook-events', WebhookEventViewSet, basename='webhook-event')
+router.register(r'webhook-deliveries', WebhookDeliveryLogViewSet, basename='webhook-delivery')
 router.register(r'kyc', KYCViewSet, basename='kyc')
 router.register(r'analytics', AnalyticsViewSet, basename='analytics')
 router.register(r'billing', BillingViewSet, basename='billing')
@@ -46,11 +53,12 @@ billing_patterns = [
     path('billing/payments/', get_payment_history, name='payment_history'),
 ]
 
-# Webhook URLs
+# Provider Webhook Receiver URLs (public endpoints)
 webhook_patterns = [
     path('webhooks/paystack/', webhook_paystack, name='webhook_paystack'),
     path('webhooks/flutterwave/', webhook_flutterwave, name='webhook_flutterwave'),
     path('webhooks/stripe/', webhook_stripe, name='webhook_stripe'),
+    path('webhooks/mono/', webhook_mono, name='webhook_mono'),
 ]
 
 urlpatterns = [

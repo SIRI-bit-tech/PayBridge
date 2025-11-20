@@ -326,3 +326,24 @@ REDIS_HOST = config('REDIS_HOST', default='localhost')
 REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
 REDIS_DB = config('REDIS_DB', default=0, cast=int)
 REDIS_PASSWORD = config('REDIS_PASSWORD', default=None)
+
+
+# ============================================
+# Webhook Configuration
+# ============================================
+
+# Provider webhook secrets for signature verification
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
+FLUTTERWAVE_SECRET_HASH = config('FLUTTERWAVE_SECRET_HASH', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+MONO_SECRET_KEY = config('MONO_SECRET_KEY', default='')
+
+# Webhook delivery settings
+WEBHOOK_MAX_RETRIES = 5
+WEBHOOK_RETRY_SCHEDULE = [60, 600, 3600, 21600, 86400]  # 1min, 10min, 1hr, 6hr, 24hr
+WEBHOOK_TIMEOUT = 30  # seconds
+WEBHOOK_MAX_RESPONSE_SIZE = 1000  # characters to store
+
+# Rate limiting for webhook deliveries
+WEBHOOK_RATE_LIMIT_PER_ENDPOINT = 100  # per minute
+WEBHOOK_RATE_LIMIT_GLOBAL = 1000  # per minute

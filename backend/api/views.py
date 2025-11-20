@@ -18,12 +18,12 @@ from datetime import timedelta
 
 from .models import (
     UserProfile, APIKey, PaymentProvider, Transaction,
-    Webhook, AuditLog, KYCVerification,
+    AuditLog, KYCVerification,
     Invoice, UsageMetric, APILog
 )
 from .serializers import (
     UserProfileSerializer, APIKeySerializer, PaymentProviderSerializer,
-    TransactionSerializer, WebhookSerializer,
+    TransactionSerializer,
     AuditLogSerializer, KYCVerificationSerializer, InvoiceSerializer,
     UsageMetricSerializer, RegistrationSerializer
 )
@@ -33,7 +33,7 @@ from .analytics_service import AnalyticsService
 from .billing_service import BillingService
 from .payment_service import PaymentService
 from .exceptions import KYCVerificationFailed, InvalidAPIKey
-from .tasks import process_transaction_webhook
+# process_transaction_webhook moved to webhook_tasks.py
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -571,11 +571,8 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
                     transaction.provider_response = result
                     transaction.save()
                     
-                    # Queue webhook processing as async task
-                    process_transaction_webhook.delay(
-                        transaction_id=str(transaction.id),
-                        idempotency_key=idempotency_key
-                    )
+                    # Webhook processing now handled by webhook_tasks.py
+                    # Transaction webhooks are triggered by provider webhook events
                 else:
                     transaction.status = 'failed'
                     transaction.provider_response = result
@@ -636,38 +633,7 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
             return {'error': str(e)}
 
 
-class WebhookViewSet(viewsets.ModelViewSet):
-    serializer_class = WebhookSerializer
-    permission_classes = [IsAuthenticated]
-    ordering = ['-created_at']  # Fix CursorPagination ordering field
-    
-    def get_queryset(self):
-        return Webhook.objects.filter(user=self.request.user)
-    
-    def create(self, request, *args, **kwargs):
-        webhook = Webhook.objects.create(
-            user=request.user,
-            url=request.data.get('url'),
-            event_types=request.data.get('event_types', [])
-        )
-        
-        AuditLog.objects.create(
-            user=request.user,
-            action='create_webhook',
-            ip_address=self.get_client_ip(request),
-            details={'webhook_id': str(webhook.id)}
-        )
-        
-        serializer = self.get_serializer(webhook)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def get_client_ip(self, request):
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+# WebhookViewSet moved to webhook_management_views.py
 
 
 

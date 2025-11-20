@@ -4,9 +4,11 @@ from django.db.models import Q, Sum, Count
 from decimal import Decimal
 from datetime import datetime, timedelta
 from .models import (
-    Transaction, PaymentProvider, APIKey, Webhook, 
-    Subscription, AuditLog, KYCVerification, APILog, Invoice
+    Transaction, PaymentProvider, APIKey,
+    AuditLog, KYCVerification, APILog, Invoice
 )
+from .webhook_models import WebhookSubscription
+from .billing_models import BillingSubscription
 
 
 class TransactionType(DjangoObjectType):
@@ -33,13 +35,13 @@ class APIKeyType(DjangoObjectType):
 
 class WebhookType(DjangoObjectType):
     class Meta:
-        model = Webhook
+        model = WebhookSubscription
         fields = ['id', 'url', 'event_types', 'is_active', 'last_triggered']
 
 
 class SubscriptionType(DjangoObjectType):
     class Meta:
-        model = Subscription
+        model = BillingSubscription
         fields = ['plan', 'status', 'current_period_start', 'current_period_end']
 
 
@@ -210,20 +212,20 @@ class Query(graphene.ObjectType):
         user = info.context.user
         if not user.is_authenticated:
             return []
-        return Webhook.objects.filter(user=user)
+        return WebhookSubscription.objects.filter(user=user)
     
     def resolve_webhook(self, info, id):
         user = info.context.user
         try:
-            return Webhook.objects.get(user=user, id=id)
-        except Webhook.DoesNotExist:
+            return WebhookSubscription.objects.get(user=user, id=id)
+        except WebhookSubscription.DoesNotExist:
             return None
     
     def resolve_subscription(self, info):
         user = info.context.user
         try:
-            return Subscription.objects.get(user=user)
-        except Subscription.DoesNotExist:
+            return BillingSubscription.objects.get(user=user)
+        except BillingSubscription.DoesNotExist:
             return None
     
     def resolve_analytics(self, info):
