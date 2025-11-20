@@ -106,7 +106,7 @@ def _process_payment_event(webhook_event, event_type, data):
     elif provider == 'flutterwave':
         reference = event_data.get('tx_ref')
     elif provider == 'stripe':
-        reference = event_data.get('id')
+        reference = event_data.get('object', {}).get('id')
     else:
         reference = None
     

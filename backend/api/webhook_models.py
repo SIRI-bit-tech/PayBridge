@@ -50,10 +50,10 @@ class WebhookEvent(models.Model):
         db_table = 'webhook_events'
         ordering = ['-received_at']
         indexes = [
-            models.Index(fields=['provider', '-received_at']),
-            models.Index(fields=['canonical_event_type', '-received_at']),
-            models.Index(fields=['processing_status', '-received_at']),
-            models.Index(fields=['provider_event_id']),
+            models.Index(fields=['provider', '-received_at'], name='webhook_eve_provide_3503e3_idx'),
+            models.Index(fields=['canonical_event_type', '-received_at'], name='webhook_eve_canonic_790910_idx'),
+            models.Index(fields=['processing_status', '-received_at'], name='webhook_eve_process_1085da_idx'),
+            models.Index(fields=['provider_event_id'], name='webhook_eve_provide_ef7be8_idx'),
         ]
     
     def __str__(self):
@@ -94,8 +94,8 @@ class WebhookSubscription(models.Model):
         db_table = 'webhook_subscriptions'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['user', 'active']),
-            models.Index(fields=['active', '-created_at']),
+            models.Index(fields=['user', 'active'], name='webhook_sub_user_id_1c6876_idx'),
+            models.Index(fields=['active', '-created_at'], name='webhook_sub_active_b2cf29_idx'),
         ]
     
     def save(self, *args, **kwargs):
@@ -159,10 +159,10 @@ class WebhookDeliveryLog(models.Model):
         db_table = 'webhook_delivery_logs'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['webhook_subscription', '-created_at']),
-            models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['event_id', 'webhook_subscription']),
-            models.Index(fields=['next_retry_at']),
+            models.Index(fields=['webhook_subscription', '-created_at'], name='webhook_del_webhook_e82b2f_idx'),
+            models.Index(fields=['status', '-created_at'], name='webhook_del_status_cc0947_idx'),
+            models.Index(fields=['event_id', 'webhook_subscription'], name='webhook_del_event_i_f21fcd_idx'),
+            models.Index(fields=['next_retry_at'], name='webhook_del_next_re_fa8c0f_idx'),
         ]
     
     def __str__(self):

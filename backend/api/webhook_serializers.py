@@ -32,11 +32,11 @@ class WebhookSubscriptionSerializer(serializers.ModelSerializer):
             'active', 'health_status', 'last_delivery_at', 'failure_count',
             'success_count', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'secret_key', 'masked_secret', 'health_status', 
+        read_only_fields = ['id', 'masked_secret', 'health_status', 
                            'last_delivery_at', 'failure_count', 'success_count', 
                            'created_at', 'updated_at']
         extra_kwargs = {
-            'secret_key': {'write_only': True}
+            'secret_key': {'write_only': True, 'required': False}
         }
     
     def get_masked_secret(self, obj):

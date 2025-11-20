@@ -153,12 +153,12 @@ export const DEVELOPER_TYPES = [
 export const WEBHOOK_EVENT_TYPES = [
   { value: 'payment.completed', label: 'Payment Completed', description: 'Payment successfully completed' },
   { value: 'payment.failed', label: 'Payment Failed', description: 'Payment failed' },
-  { value: 'payment.refunded', label: 'Payment Refunded', description: 'Payment refunded' },
   { value: 'subscription.created', label: 'Subscription Created', description: 'Subscription created' },
   { value: 'subscription.updated', label: 'Subscription Updated', description: 'Subscription updated' },
   { value: 'subscription.cancelled', label: 'Subscription Cancelled', description: 'Subscription cancelled' },
   { value: 'kyc.verified', label: 'KYC Verified', description: 'KYC verification completed' },
-  { value: 'kyc.failed', label: 'KYC Failed', description: 'KYC verification failed' },
+  { value: 'kyc.updated', label: 'KYC Updated', description: 'KYC information updated' },
+  { value: 'kyc.reauth_required', label: 'KYC Reauth Required', description: 'KYC reauthorization required' },
   { value: 'transfer.completed', label: 'Transfer Completed', description: 'Transfer/payout completed' },
   { value: 'transfer.failed', label: 'Transfer Failed', description: 'Transfer/payout failed' },
 ]

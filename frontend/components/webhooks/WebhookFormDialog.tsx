@@ -42,9 +42,13 @@ export function WebhookFormDialog({ open, onOpenChange, onSubmit }: WebhookFormD
 
     // Validate URL
     try {
-      new URL(url)
+      const urlObj = new URL(url)
+      if (urlObj.protocol !== 'https:') {
+        toast.error("Please enter a valid HTTPS URL")
+        return
+      }
     } catch {
-      toast.error("Please enter a valid URL")
+      toast.error("Please enter a valid HTTPS URL")
       return
     }
 
