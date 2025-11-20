@@ -1,9 +1,11 @@
 from django.contrib import admin
 from .models import (
-    UserProfile, APIKey, PaymentProvider, Transaction,
-    Webhook, AuditLog
+    UserProfile, APIKey, PaymentProvider, Transaction, AuditLog
 )
 from .billing_models import Plan, BillingSubscription, Payment, Feature
+from .webhook_models import (
+    WebhookEvent, WebhookSubscription, WebhookDeliveryLog, WebhookDeliveryMetrics
+)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -27,10 +29,32 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ['reference', 'user__email']
     list_filter = ['status', 'provider', 'currency']
 
-@admin.register(Webhook)
-class WebhookAdmin(admin.ModelAdmin):
-    list_display = ['user', 'url', 'is_active', 'last_triggered']
+@admin.register(WebhookEvent)
+class WebhookEventAdmin(admin.ModelAdmin):
+    list_display = ['provider', 'canonical_event_type', 'provider_event_id', 'processing_status', 'received_at']
+    search_fields = ['provider_event_id', 'canonical_event_type']
+    list_filter = ['provider', 'processing_status', 'signature_valid']
+    readonly_fields = ['id', 'raw_payload', 'received_at', 'created_at', 'updated_at']
+
+@admin.register(WebhookSubscription)
+class WebhookSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'url', 'active', 'last_delivery_status', 'last_delivery_at']
     search_fields = ['user__email', 'url']
+    list_filter = ['active', 'last_delivery_status']
+    readonly_fields = ['secret_key', 'created_at', 'updated_at']
+
+@admin.register(WebhookDeliveryLog)
+class WebhookDeliveryLogAdmin(admin.ModelAdmin):
+    list_display = ['webhook_subscription', 'event_type', 'attempt_number', 'status', 'http_status_code', 'created_at']
+    search_fields = ['event_type', 'event_id']
+    list_filter = ['status', 'attempt_number']
+    readonly_fields = ['created_at', 'updated_at']
+
+@admin.register(WebhookDeliveryMetrics)
+class WebhookDeliveryMetricsAdmin(admin.ModelAdmin):
+    list_display = ['webhook_subscription', 'period_start', 'total_deliveries', 'successful_deliveries', 'failed_deliveries']
+    list_filter = ['period_start']
+    readonly_fields = ['created_at', 'updated_at']
 
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):

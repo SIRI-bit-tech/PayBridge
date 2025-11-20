@@ -5,9 +5,9 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from api.graphql_view import AuthenticatedGraphQLView
-from api.webhook_views import (
-    paystack_webhook, flutterwave_webhook, 
-    stripe_webhook, chapa_webhook, mono_webhook
+from api.webhook_receiver import (
+    webhook_paystack, webhook_flutterwave, 
+    webhook_stripe, webhook_mono
 )
 from api.views import RegisterView
 
@@ -54,10 +54,6 @@ urlpatterns = [
     # Billing routes (without v1 prefix for frontend compatibility)
     path('api/', include('api.urls')),
     
-    # Webhooks
-    path('api/v1/webhooks/paystack/', paystack_webhook, name='paystack_webhook'),
-    path('api/v1/webhooks/flutterwave/', flutterwave_webhook, name='flutterwave_webhook'),
-    path('api/v1/webhooks/stripe/', stripe_webhook, name='stripe_webhook'),
-    path('api/v1/webhooks/chapa/', chapa_webhook, name='chapa_webhook'),
-    path('api/v1/webhooks/mono/', mono_webhook, name='mono_webhook'),
+    # Webhooks (handled by api.urls webhook_patterns)
+    # Removed duplicate webhook routes - now in api/urls.py
 ]

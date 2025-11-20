@@ -455,3 +455,90 @@ export async function getUsage() {
 export async function getPaymentHistory() {
   return apiCall("/billing/payments/", { method: "GET" })
 }
+
+
+// ===========================
+// WEBHOOK APIs
+// ===========================
+
+export async function getWebhookSubscriptions() {
+  return apiCall("/webhook-subscriptions/")
+}
+
+export async function createWebhookSubscription(data: { url: string; selected_events: string[] }) {
+  return apiCall("/webhook-subscriptions/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateWebhookSubscription(id: string, data: { url?: string; selected_events?: string[]; active?: boolean }) {
+  return apiCall(`/webhook-subscriptions/${id}/`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteWebhookSubscription(id: string) {
+  return apiCall(`/webhook-subscriptions/${id}/`, {
+    method: "DELETE",
+  })
+}
+
+export async function testWebhookSubscription(id: string) {
+  return apiCall(`/webhook-subscriptions/${id}/test/`, {
+    method: "POST",
+  })
+}
+
+export async function rotateWebhookSecret(id: string) {
+  return apiCall(`/webhook-subscriptions/${id}/rotate_secret/`, {
+    method: "POST",
+  })
+}
+
+export async function toggleWebhookSubscription(id: string) {
+  return apiCall(`/webhook-subscriptions/${id}/toggle/`, {
+    method: "POST",
+  })
+}
+
+export async function getWebhookDeliveryLogs(subscriptionId: string) {
+  return apiCall(`/webhook-subscriptions/${subscriptionId}/delivery_logs/`)
+}
+
+export async function getWebhookMetrics(subscriptionId: string) {
+  return apiCall(`/webhook-subscriptions/${subscriptionId}/metrics/`)
+}
+
+export async function getAvailableWebhookEvents() {
+  return apiCall("/webhook-subscriptions/available_events/")
+}
+
+export async function getWebhookDashboard() {
+  return apiCall("/webhook-subscriptions/dashboard/")
+}
+
+export async function getWebhookEvents() {
+  return apiCall("/webhook-events/")
+}
+
+export async function replayWebhookEvent(eventId: string) {
+  return apiCall(`/webhook-events/${eventId}/replay/`, {
+    method: "POST",
+  })
+}
+
+export async function getWebhookDeliveries() {
+  return apiCall("/webhook-deliveries/")
+}
+
+export async function retryWebhookDelivery(deliveryId: string) {
+  return apiCall(`/webhook-deliveries/${deliveryId}/retry/`, {
+    method: "POST",
+  })
+}
+
+export async function getDeadLetterQueue() {
+  return apiCall("/webhook-deliveries/dead_letter_queue/")
+}

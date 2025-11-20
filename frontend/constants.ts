@@ -148,3 +148,33 @@ export const DEVELOPER_TYPES = [
   { value: "agency", label: "Agency" },
   { value: "other", label: "Other" },
 ]
+
+// Webhook Event Types
+export const WEBHOOK_EVENT_TYPES = [
+  { value: 'payment.completed', label: 'Payment Completed', description: 'Payment successfully completed' },
+  { value: 'payment.failed', label: 'Payment Failed', description: 'Payment failed' },
+  { value: 'payment.refunded', label: 'Payment Refunded', description: 'Payment refunded' },
+  { value: 'subscription.created', label: 'Subscription Created', description: 'Subscription created' },
+  { value: 'subscription.updated', label: 'Subscription Updated', description: 'Subscription updated' },
+  { value: 'subscription.cancelled', label: 'Subscription Cancelled', description: 'Subscription cancelled' },
+  { value: 'kyc.verified', label: 'KYC Verified', description: 'KYC verification completed' },
+  { value: 'kyc.failed', label: 'KYC Failed', description: 'KYC verification failed' },
+  { value: 'transfer.completed', label: 'Transfer Completed', description: 'Transfer/payout completed' },
+  { value: 'transfer.failed', label: 'Transfer Failed', description: 'Transfer/payout failed' },
+]
+
+// Webhook Health Status
+export const WEBHOOK_HEALTH_STATUS = {
+  healthy: { label: 'Healthy', color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  degraded: { label: 'Degraded', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
+  failing: { label: 'Failing', color: 'text-red-500', bgColor: 'bg-red-500/10' },
+  disabled: { label: 'Disabled', color: 'text-gray-500', bgColor: 'bg-gray-500/10' },
+}
+
+// Webhook Delivery Status
+export const WEBHOOK_DELIVERY_STATUS = {
+  pending: { label: 'Pending', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+  success: { label: 'Success', color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  failed: { label: 'Failed', color: 'text-red-500', bgColor: 'bg-red-500/10' },
+  dead_letter: { label: 'Dead Letter', color: 'text-gray-500', bgColor: 'bg-gray-500/10' },
+}

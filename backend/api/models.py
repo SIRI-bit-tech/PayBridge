@@ -184,28 +184,7 @@ class Transaction(models.Model):
         return f"{self.reference} - {self.amount} {self.currency}"
 
 
-class Webhook(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='webhooks')
-    url = models.URLField()
-    event_types = models.JSONField(default=list)  # ['payment.completed', 'payment.failed', etc]
-    is_active = models.BooleanField(default=True)
-    secret = models.CharField(max_length=255, unique=True)
-    retry_count = models.IntegerField(default=0)
-    last_triggered = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'webhooks'
-    
-    def save(self, *args, **kwargs):
-        if not self.secret:
-            self.secret = secrets.token_urlsafe(64)
-        super().save(*args, **kwargs)
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.url}"
+# Webhook models moved to webhook_models.py for better organization
 
 
 
@@ -357,30 +336,7 @@ class UsageMetric(models.Model):
         return f"{self.user.email} - {self.period_start} to {self.period_end}"
 
 
-class WebhookEvent(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('success', 'Success'),
-        ('failed', 'Failed'),
-    )
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    webhook = models.ForeignKey(Webhook, on_delete=models.CASCADE, related_name='events')
-    event_type = models.CharField(max_length=50)
-    payload = models.JSONField(default=dict)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    response_status_code = models.IntegerField(null=True, blank=True)
-    error_message = models.TextField(blank=True)
-    attempt = models.IntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'webhook_events'
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.webhook.url} - {self.event_type}"
+# WebhookEvent model moved to webhook_models.py for better organization
 
 
 class Settlement(models.Model):

@@ -2,163 +2,227 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { getWebhooks, createWebhook, deleteWebhook } from "@/lib/api"
-import type { Webhook } from "@/types"
+import { WebhookSubscription, WebhookDashboard, WebhookDeliveryLog } from "@/types"
+import {
+  getWebhookSubscriptions,
+  createWebhookSubscription,
+  deleteWebhookSubscription,
+  testWebhookSubscription,
+  toggleWebhookSubscription,
+  rotateWebhookSecret,
+  getWebhookDashboard,
+  getWebhookDeliveryLogs,
+  retryWebhookDelivery,
+} from "@/lib/api"
+import { toast } from "sonner"
+import { Plus } from "lucide-react"
+import { WebhookCard } from "@/components/webhooks/WebhookCard"
+import { WebhookFormDialog } from "@/components/webhooks/WebhookFormDialog"
+import { WebhookStats } from "@/components/webhooks/WebhookStats"
+import { DeliveryLogsTable } from "@/components/webhooks/DeliveryLogsTable"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useWebhookSocket } from "@/hooks/useWebhookSocket"
 
 export default function WebhooksPage() {
-  const [webhooks, setWebhooks] = useState<Webhook[]>([])
+  const [webhooks, setWebhooks] = useState<WebhookSubscription[]>([])
+  const [stats, setStats] = useState<WebhookDashboard | null>(null)
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [url, setUrl] = useState("")
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([])
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [logsDialogOpen, setLogsDialogOpen] = useState(false)
+  const [selectedWebhookId, setSelectedWebhookId] = useState<string | null>(null)
+  const [deliveryLogs, setDeliveryLogs] = useState<WebhookDeliveryLog[]>([])
 
-  const events = [
-    "payment.completed",
-    "payment.failed",
-    "payment.pending",
-    "refund.initiated",
-    "kyc.verified",
-    "kyc.failed",
-  ]
+  const { connected, deliveryUpdates } = useWebhookSocket()
 
   useEffect(() => {
-    fetchWebhooks()
+    loadData()
   }, [])
 
-  const fetchWebhooks = async () => {
-    setLoading(true)
-    const response = await getWebhooks()
-    if (response.data) {
-      setWebhooks(response.data as Webhook[])
+  // Real-time updates
+  useEffect(() => {
+    if (deliveryUpdates.length > 0) {
+      // Refresh stats when new delivery updates come in
+      loadStats()
     }
+  }, [deliveryUpdates])
+
+  const loadData = async () => {
+    setLoading(true)
+    await Promise.all([loadWebhooks(), loadStats()])
     setLoading(false)
   }
 
-  const handleCreateWebhook = async () => {
-    if (!url.trim() || selectedEvents.length === 0) return
-
-    setCreating(true)
-    const response = await createWebhook({ url, event_types: selectedEvents })
+  const loadWebhooks = async () => {
+    const response = await getWebhookSubscriptions()
     if (response.data) {
-      setWebhooks([...webhooks, response.data as Webhook])
-      setUrl("")
-      setSelectedEvents([])
+      setWebhooks(response.data as WebhookSubscription[])
     }
-    setCreating(false)
   }
 
-  const handleDeleteWebhook = async (id: string) => {
-    const response = await deleteWebhook(id)
-    if (response.status === 204) {
-      setWebhooks(webhooks.filter((w) => w.id !== id))
+  const loadStats = async () => {
+    const response = await getWebhookDashboard()
+    if (response.data) {
+      setStats(response.data as WebhookDashboard)
     }
+  }
+
+  const handleCreate = async (data: { url: string; selected_events: string[] }) => {
+    const response = await createWebhookSubscription(data)
+    if (response.data) {
+      toast.success("Webhook endpoint created successfully")
+      loadWebhooks()
+      loadStats()
+    } else {
+      toast.error(response.error || "Failed to create webhook")
+    }
+  }
+
+  const handleTest = async (id: string) => {
+    const response = await testWebhookSubscription(id)
+    if (response.data) {
+      toast.success("Test webhook sent successfully")
+    } else {
+      toast.error(response.error || "Failed to send test webhook")
+    }
+  }
+
+  const handleToggle = async (id: string) => {
+    const response = await toggleWebhookSubscription(id)
+    if (response.data) {
+      const data = response.data as { message: string; active: boolean }
+      toast.success(data.message)
+      loadWebhooks()
+    } else {
+      toast.error(response.error || "Failed to toggle webhook")
+    }
+  }
+
+  const handleRotateSecret = async (id: string) => {
+    const response = await rotateWebhookSecret(id)
+    if (response.data) {
+      const data = response.data as { message: string; new_secret: string }
+      toast.success("Secret key rotated successfully")
+      toast.info(`New secret: ${data.new_secret}`, { duration: 10000 })
+      loadWebhooks()
+    } else {
+      toast.error(response.error || "Failed to rotate secret")
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this webhook endpoint?")) return
+
+    const response = await deleteWebhookSubscription(id)
+    if (response.status === 204) {
+      toast.success("Webhook endpoint deleted")
+      loadWebhooks()
+      loadStats()
+    } else {
+      toast.error("Failed to delete webhook")
+    }
+  }
+
+  const handleViewLogs = async (id: string) => {
+    setSelectedWebhookId(id)
+    setLogsDialogOpen(true)
+    const response = await getWebhookDeliveryLogs(id)
+    if (response.data) {
+      setDeliveryLogs(response.data as WebhookDeliveryLog[])
+    }
+  }
+
+  const handleRetryDelivery = async (deliveryId: string) => {
+    const response = await retryWebhookDelivery(deliveryId)
+    if (response.data) {
+      toast.success("Delivery retry queued")
+      if (selectedWebhookId) {
+        handleViewLogs(selectedWebhookId)
+      }
+    } else {
+      toast.error(response.error || "Failed to retry delivery")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-sm text-muted-foreground">Loading webhooks...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Webhooks</h1>
-        <p className="text-neutral-400">Receive real-time payment events</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Webhooks</h1>
+          <p className="text-muted-foreground">
+            Manage webhook endpoints and monitor delivery status
+            {connected && <span className="ml-2 text-green-500">● Live</span>}
+          </p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Webhook
+        </Button>
       </div>
 
-      {/* Create Webhook */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Create Webhook Endpoint</CardTitle>
-          <CardDescription>Subscribe to payment and KYC events</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            type="url"
-            placeholder="https://example.com/webhooks/paybridge"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="bg-background border-border"
-          />
+      {stats && <WebhookStats stats={stats} />}
 
-          <div>
-            <label className="text-foreground text-sm font-medium mb-2 block">Subscribe to events:</label>
-            <div className="grid grid-cols-2 gap-3">
-              {events.map((event) => (
-                <label key={event} className="flex items-center gap-2 text-neutral-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedEvents.includes(event)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedEvents([...selectedEvents, event])
-                      } else {
-                        setSelectedEvents(selectedEvents.filter((e) => e !== event))
-                      }
-                    }}
-                    className="rounded"
-                  />
-                  {event}
-                </label>
-              ))}
-            </div>
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Webhook Endpoints</h2>
+        {webhooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <p className="text-lg font-medium">No webhook endpoints yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create your first webhook endpoint to start receiving real-time events
+            </p>
+            <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Webhook
+            </Button>
           </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {webhooks.map((webhook) => (
+              <WebhookCard
+                key={webhook.id}
+                webhook={webhook}
+                onTest={handleTest}
+                onToggle={handleToggle}
+                onRotateSecret={handleRotateSecret}
+                onDelete={handleDelete}
+                onViewLogs={handleViewLogs}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-          <Button onClick={handleCreateWebhook} disabled={creating || !url.trim() || selectedEvents.length === 0}>
-            {creating ? "Creating..." : "Create Webhook"}
-          </Button>
-        </CardContent>
-      </Card>
+      <WebhookFormDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={handleCreate}
+      />
 
-      {/* Webhooks List */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Active Webhooks</CardTitle>
-          <CardDescription>
-            {webhooks.length} endpoint{webhooks.length !== 1 ? "s" : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-neutral-400">Loading...</p>
-          ) : webhooks.length === 0 ? (
-            <p className="text-neutral-400">No webhooks configured yet</p>
-          ) : (
-            <div className="space-y-4">
-              {webhooks.map((webhook) => (
-                <div key={webhook.id} className="bg-muted rounded p-4 border border-border">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-mono text-sm text-primary break-all">{webhook.url}</h3>
-                      <p className="text-sm text-neutral-400 mt-2">
-                        Status:{" "}
-                        <span className={webhook.is_active ? "text-green-400" : "text-red-400"}>
-                          {webhook.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {webhook.event_types.map((event) => (
-                          <span
-                            key={event}
-                            className="inline-block bg-primary/20 text-primary px-2 py-1 rounded text-xs"
-                          >
-                            {event}
-                          </span>
-                        ))}
-                      </div>
-                      {webhook.last_triggered && (
-                        <p className="text-xs text-neutral-500 mt-2">
-                          Last triggered: {new Date(webhook.last_triggered).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteWebhook(webhook.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Dialog open={logsDialogOpen} onOpenChange={setLogsDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Delivery Logs</DialogTitle>
+            <DialogDescription>View webhook delivery attempts and status</DialogDescription>
+          </DialogHeader>
+          <DeliveryLogsTable logs={deliveryLogs} onRetry={handleRetryDelivery} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
