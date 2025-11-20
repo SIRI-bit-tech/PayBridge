@@ -19,6 +19,9 @@ from .webhook_management_views import (
 from .webhook_receiver import (
     webhook_paystack, webhook_flutterwave, webhook_stripe, webhook_mono
 )
+from .settings_views import (
+    BusinessProfileViewSet, PaymentProviderConfigViewSet
+)
 
 router = DefaultRouter()
 router.register(r'profile', UserProfileViewSet, basename='profile')
@@ -28,6 +31,8 @@ router.register(r'transactions', TransactionViewSet, basename='transaction')
 router.register(r'webhook-subscriptions', WebhookSubscriptionViewSet, basename='webhook-subscription')
 router.register(r'webhook-events', WebhookEventViewSet, basename='webhook-event')
 router.register(r'webhook-deliveries', WebhookDeliveryLogViewSet, basename='webhook-delivery')
+router.register(r'settings/business-profile', BusinessProfileViewSet, basename='business-profile')
+router.register(r'settings/providers', PaymentProviderConfigViewSet, basename='provider-config')
 router.register(r'kyc', KYCViewSet, basename='kyc')
 router.register(r'analytics', AnalyticsViewSet, basename='analytics')
 router.register(r'billing', BillingViewSet, basename='billing')

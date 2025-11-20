@@ -14,6 +14,7 @@ django_asgi_app = get_asgi_application()
 from api.socketio_server import sio
 from api.redis_pubsub import RedisSubscriber
 from api.billing_redis_listener import billing_listener
+from api.settings_redis_listener import settings_redis_listener
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,14 @@ async def start_billing_listener():
     except Exception as e:
         logger.exception(f"Billing listener error: {str(e)}")
 
+async def start_settings_listener():
+    """Start settings Redis pub/sub listener in background"""
+    try:
+        logger.info("Starting settings Redis listener...")
+        await settings_redis_listener.listen()
+    except Exception as e:
+        logger.exception(f"Settings listener error: {str(e)}")
+
 # Module-level list to keep references to background tasks
 _background_tasks = []
 
@@ -47,7 +56,8 @@ try:
     # Keep references to prevent garbage collection
     redis_task = loop.create_task(start_redis_listener())
     billing_task = loop.create_task(start_billing_listener())
-    _background_tasks.extend([redis_task, billing_task])
+    settings_task = loop.create_task(start_settings_listener())
+    _background_tasks.extend([redis_task, billing_task, settings_task])
     logger.info("Redis listener tasks scheduled")
 except (KeyboardInterrupt, SystemExit):
     # Allow system exits to propagate

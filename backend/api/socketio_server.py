@@ -329,3 +329,75 @@ async def emit_limit_reached(user_id, data):
     room = f"billing_{user_id}"
     await sio.emit('plan:limit_reached', data, room=room)
     logger.info(f"Emitted plan:limit_reached to room: {room}")
+
+
+@sio.event
+async def join_settings(sid):
+    """Join settings room for real-time updates"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            logger.warning(f"join_settings failed for {sid}: No user_id in session")
+            return
+        
+        room = f"settings_{user_id}"
+        sio.enter_room(sid, room)
+        logger.info(f"Client {sid} joined room: {room}")
+        
+        await sio.emit('joined_settings', {'room': room}, room=sid)
+    except Exception as e:
+        logger.error(f"Error in join_settings: {str(e)}")
+
+
+@sio.event
+async def leave_settings(sid):
+    """Leave settings room"""
+    try:
+        async with sio.session(sid) as session:
+            user_id = session.get('user_id')
+            
+        if not user_id:
+            return
+        
+        room = f"settings_{user_id}"
+        sio.leave_room(sid, room)
+        logger.info(f"Client {sid} left room: {room}")
+    except Exception as e:
+        logger.error(f"Error in leave_settings: {str(e)}")
+
+
+async def emit_profile_updated(user_id, data):
+    """Emit profile updated event to user"""
+    room = f"settings_{user_id}"
+    await sio.emit('settings:profile_updated', data, room=room)
+    logger.info(f"Emitted settings:profile_updated to room: {room}")
+
+
+async def emit_provider_updated(user_id, data):
+    """Emit provider updated event to user"""
+    room = f"settings_{user_id}"
+    await sio.emit('settings:provider_updated', data, room=room)
+    logger.info(f"Emitted settings:provider_updated to room: {room}")
+
+
+async def emit_provider_added(user_id, data):
+    """Emit provider added event to user"""
+    room = f"settings_{user_id}"
+    await sio.emit('settings:provider_added', data, room=room)
+    logger.info(f"Emitted settings:provider_added to room: {room}")
+
+
+async def emit_provider_deleted(user_id, data):
+    """Emit provider deleted event to user"""
+    room = f"settings_{user_id}"
+    await sio.emit('settings:provider_deleted', data, room=room)
+    logger.info(f"Emitted settings:provider_deleted to room: {room}")
+
+
+async def emit_provider_mode_changed(user_id, data):
+    """Emit provider mode changed event to user"""
+    room = f"settings_{user_id}"
+    await sio.emit('settings:provider_mode_changed', data, room=room)
+    logger.info(f"Emitted settings:provider_mode_changed to room: {room}")

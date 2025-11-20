@@ -369,3 +369,7 @@ class Settlement(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.amount} {self.currency}"
+
+
+# Import settings models so Django recognizes them
+from .settings_models import BusinessProfile, PaymentProviderConfig

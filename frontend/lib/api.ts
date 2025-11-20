@@ -553,3 +553,85 @@ export async function retryWebhookDelivery(deliveryId: string) {
 export async function getDeadLetterQueue() {
   return apiCall("/webhook-deliveries/dead_letter_queue/")
 }
+
+
+// ===========================
+// Settings API
+// ===========================
+
+export async function getBusinessProfile() {
+  return apiCall("/settings/business-profile/")
+}
+
+export async function updateBusinessProfile(data: {
+  company_name?: string
+  business_phone?: string
+  business_type?: string
+  country?: string
+  business_email?: string
+  business_address?: string
+  tax_id?: string
+  website?: string
+}) {
+  return apiCall("/settings/business-profile/current/", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getProviderConfigs() {
+  return apiCall("/settings/providers/")
+}
+
+export async function createProviderConfig(data: {
+  provider: string
+  public_key: string
+  secret_key: string
+  mode: string
+  is_active?: boolean
+}) {
+  return apiCall("/settings/providers/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateProviderConfig(id: string, data: {
+  public_key?: string
+  secret_key?: string
+  mode?: string
+  is_active?: boolean
+}) {
+  return apiCall(`/settings/providers/${id}/`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteProviderConfig(id: string) {
+  return apiCall(`/settings/providers/${id}/`, {
+    method: "DELETE",
+  })
+}
+
+export async function validateProviderConfig(id: string) {
+  return apiCall(`/settings/providers/${id}/validate/`, {
+    method: "POST",
+  })
+}
+
+export async function setPrimaryProvider(id: string) {
+  return apiCall(`/settings/providers/${id}/set_primary/`, {
+    method: "POST",
+  })
+}
+
+export async function toggleProviderMode(id: string) {
+  return apiCall(`/settings/providers/${id}/toggle_mode/`, {
+    method: "POST",
+  })
+}
+
+export async function getPrimaryProvider() {
+  return apiCall("/settings/providers/primary/")
+}
