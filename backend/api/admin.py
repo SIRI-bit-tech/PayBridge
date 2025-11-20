@@ -6,6 +6,7 @@ from .billing_models import Plan, BillingSubscription, Payment, Feature
 from .webhook_models import (
     WebhookEvent, WebhookSubscription, WebhookDeliveryLog, WebhookDeliveryMetrics
 )
+from .settings_models import BusinessProfile, PaymentProviderConfig
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -87,3 +88,25 @@ class AuditLogAdmin(admin.ModelAdmin):
     search_fields = ['user__email', 'action']
     list_filter = ['action', 'created_at']
     readonly_fields = ['user', 'action', 'ip_address', 'user_agent', 'details', 'created_at']
+
+
+@admin.register(BusinessProfile)
+class BusinessProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'company_name', 'country', 'business_type', 'created_at']
+    search_fields = ['user__email', 'company_name']
+    list_filter = ['country', 'business_type']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+
+
+@admin.register(PaymentProviderConfig)
+class PaymentProviderConfigAdmin(admin.ModelAdmin):
+    list_display = ['user', 'provider', 'mode', 'is_active', 'is_primary', 'credentials_validated']
+    search_fields = ['user__email', 'provider']
+    list_filter = ['provider', 'mode', 'is_active', 'is_primary', 'credentials_validated']
+    readonly_fields = ['id', 'public_key_encrypted', 'secret_key_encrypted', 'created_at', 'updated_at']
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make encrypted fields readonly"""
+        if obj:
+            return self.readonly_fields + ['user', 'provider']
+        return self.readonly_fields

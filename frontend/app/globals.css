@@ -1,6 +1,42 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Radix Select Dropdown - Solid Background */
+[data-radix-popper-content-wrapper] {
+  z-index: 50;
+}
+
+[data-slot="select-content"] {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border));
+}
+
+[data-slot="select-item"] {
+  background-color: transparent;
+}
+
+[data-slot="select-item"][data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Tabs Active State - More Prominent */
+[data-slot="tabs-trigger"][data-state="active"] {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+  font-weight: 600;
+}
+
+[data-slot="tabs-trigger"][data-state="inactive"] {
+  opacity: 0.7;
+}
+
+[data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
+  background-color: hsl(var(--accent) / 0.5);
+  opacity: 1;
+}
+
 /* React Select Styles */
 .react-select-container .react-select__control {
   background-color: hsl(var(--background));
@@ -8,8 +44,9 @@
 }
 
 .react-select-container .react-select__menu {
-  background-color: hsl(var(--popover));
+  background-color: hsl(var(--card));
   color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
 }
 
 .react-select-container .react-select__option--is-focused {

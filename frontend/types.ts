@@ -188,3 +188,39 @@ export interface AuthResponse {
   refresh: string
   user: User
 }
+
+// Settings Types
+export interface BusinessProfile {
+  id: string
+  company_name: string
+  business_phone: string
+  business_type: string
+  country: string
+  business_email?: string
+  business_address?: string
+  tax_id?: string
+  website?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface PaymentProviderConfig {
+  id: string
+  provider: 'paystack' | 'flutterwave' | 'stripe'
+  mode: 'test' | 'live'
+  is_active: boolean
+  is_primary: boolean
+  public_key_masked: string
+  secret_key_masked: string
+  credentials_validated: boolean
+  last_validated_at: string | null
+  validation_error: string
+  webhook_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SettingsWebSocketMessage {
+  type: 'settings:profile_updated' | 'settings:provider_updated' | 'settings:provider_added' | 'settings:provider_deleted' | 'settings:provider_mode_changed'
+  data: any
+}

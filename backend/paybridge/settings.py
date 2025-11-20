@@ -9,6 +9,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
 
+# Encryption key for sensitive data (payment provider credentials)
+# Generate with: from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())
+ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='')
+if not ENCRYPTION_KEY:
+    # Generate a temporary key for development
+    from cryptography.fernet import Fernet
+    ENCRYPTION_KEY = Fernet.generate_key().decode()
+    import logging
+    logging.warning("No ENCRYPTION_KEY set in environment, using generated key (not suitable for production)")
+
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['*']  # For development only

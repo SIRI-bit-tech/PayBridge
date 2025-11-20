@@ -18,6 +18,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'flutterwave.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.ctfassets.net',
+      },
     ],
   },
 }
