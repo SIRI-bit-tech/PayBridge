@@ -83,12 +83,23 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
       }
     }
 
-    const data = await response.json()
+    // Handle no-body responses (204 No Content, etc.)
+    let data
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      data = null
+    } else {
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        data = null
+      }
+    }
 
     if (response.ok) {
       return { data, status: response.status }
     } else {
-      return { error: data.detail || data.error || "An error occurred", status: response.status }
+      return { error: data?.detail || data?.error || "An error occurred", status: response.status }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Network error"
@@ -113,27 +124,27 @@ export async function login(credentials: LoginCredentials) {
     body: JSON.stringify(credentials),
     credentials: 'include',
   });
-  
+
   // Store tokens in localStorage
   if (response.data) {
     localStorage.setItem('access_token', response.data.access);
     localStorage.setItem('refresh_token', response.data.refresh);
   }
-  
+
   return response;
 }
 
 export async function refreshToken(): Promise<string | null> {
   const refresh = localStorage.getItem('refresh_token');
   if (!refresh) return null;
-  
+
   try {
     const response = await fetch(`${API_BASE_URL_ENV}/auth/token/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh }),
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       localStorage.setItem('access_token', data.access);
@@ -142,7 +153,7 @@ export async function refreshToken(): Promise<string | null> {
   } catch (error) {
     console.error('Token refresh failed:', error);
   }
-  
+
   return null;
 }
 
@@ -187,7 +198,7 @@ export async function register(data: {
     ...data,
     terms_accepted: Boolean(data.terms_accepted)
   }
-  
+
   return apiCall("/auth/register/", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -344,9 +355,9 @@ export async function getAnalytics(): Promise<ApiResponse<Analytics>> {
       }
     }
   `
-  
+
   const graphqlResponse = await graphQLQuery<any>(query)
-  
+
   // If GraphQL works, return it
   if (graphqlResponse.data?.analytics) {
     return {
@@ -354,17 +365,17 @@ export async function getAnalytics(): Promise<ApiResponse<Analytics>> {
       status: graphqlResponse.status
     }
   }
-  
+
   // Fallback to REST API
   const restResponse = await apiCall<any>("/analytics/dashboard/")
-  
+
   if (restResponse.data) {
     return {
       data: restResponse.data,
       status: restResponse.status
     }
   }
-  
+
   return graphqlResponse // Return original error
 }
 

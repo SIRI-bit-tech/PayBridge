@@ -36,7 +36,7 @@ class APIKeyType(DjangoObjectType):
 class WebhookType(DjangoObjectType):
     class Meta:
         model = WebhookSubscription
-        fields = ['id', 'url', 'event_types', 'is_active', 'last_triggered']
+        fields = ['id', 'url', 'selected_events', 'active', 'last_delivery_at']
 
 
 class SubscriptionType(DjangoObjectType):

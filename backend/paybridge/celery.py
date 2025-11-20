@@ -11,14 +11,15 @@ app.autodiscover_tasks()
 
 # Periodic tasks for billing and webhooks
 app.conf.beat_schedule = {
-    'check-expired-subscriptions': {
-        'task': 'billing.check_expired_subscriptions',
-        'schedule': crontab(hour=0, minute=0),  # Daily at midnight
-    },
-    'sync-usage-to-database': {
-        'task': 'billing.sync_usage_to_database',
-        'schedule': crontab(minute='*/30'),  # Every 30 minutes
-    },
+    # Billing tasks commented out - implement these in billing_tasks.py if needed
+    # 'check-expired-subscriptions': {
+    #     'task': 'billing.check_expired_subscriptions',
+    #     'schedule': crontab(hour=0, minute=0),
+    # },
+    # 'sync-usage-to-database': {
+    #     'task': 'billing.sync_usage_to_database',
+    #     'schedule': crontab(minute='*/30'),
+    # },
     'retry-failed-webhook-deliveries': {
         'task': 'api.webhook_tasks.retry_failed_deliveries',
         'schedule': crontab(minute='*/5'),  # Every 5 minutes

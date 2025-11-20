@@ -35,28 +35,9 @@ class WebhookSubscriptionViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         """Register a new webhook endpoint"""
-        url = request.data.get('url')
-        selected_events = request.data.get('selected_events', [])
-        
-        if not url:
-            return Response(
-                {'error': 'URL is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not selected_events:
-            return Response(
-                {'error': 'At least one event type must be selected'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Create subscription
-        subscription = WebhookSubscription.objects.create(
-            user=request.user,
-            url=url,
-            selected_events=selected_events,
-            active=True
-        )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        subscription = serializer.save(user=request.user)
         
         # Log action
         AuditLog.objects.create(
@@ -65,12 +46,12 @@ class WebhookSubscriptionViewSet(viewsets.ModelViewSet):
             ip_address=self.get_client_ip(request),
             details={
                 'webhook_id': str(subscription.id),
-                'url': url,
-                'events': selected_events
+                'url': subscription.url,
+                'events': subscription.selected_events
             }
         )
         
-        serializer = self.get_serializer(subscription)
+        serializer = self.get_serializer(subscription, context={'show_secret': True})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def update(self, request, *args, **kwargs):
@@ -126,7 +107,7 @@ class WebhookSubscriptionViewSet(viewsets.ModelViewSet):
         
         # Create a test webhook event
         test_event = WebhookEvent.objects.create(
-            provider='paybridge',
+            provider='stripe',
             provider_event_id=f"test_{timezone.now().timestamp()}",
             canonical_event_type='test.webhook',
             raw_payload={
@@ -381,9 +362,15 @@ class WebhookDeliveryLogViewSet(viewsets.ReadOnlyModelViewSet):
         """Manually retry a failed delivery"""
         delivery_log = self.get_object()
         
-        if delivery_log.status == 'success':
+        if delivery_log.status not in ('failed', 'dead_letter'):
             return Response(
-                {'error': 'Cannot retry successful delivery'},
+                {'error': 'Can only retry failed or dead_letter deliveries'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if delivery_log.webhook_event is None:
+            return Response(
+                {'error': 'Cannot retry delivery without associated webhook event'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
