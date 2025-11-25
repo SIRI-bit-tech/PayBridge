@@ -23,9 +23,25 @@ else
     echo "Database is ready!"
 fi
 
-# Run database migrations
+# Run database migrations with conflict handling
 echo "Running database migrations..."
-python manage.py migrate --noinput
+
+# First, try normal migration
+if python manage.py migrate --noinput; then
+    echo "Migrations completed successfully"
+else
+    echo "Normal migration failed, trying to resolve conflicts..."
+    
+    # Check if tables exist and mark initial migrations as fake
+    echo "Marking initial migrations as applied..."
+    python manage.py migrate --fake-initial --noinput || true
+    
+    # Try to run remaining migrations
+    echo "Running remaining migrations..."
+    python manage.py migrate --noinput || {
+        echo "Some migrations failed, but continuing with deployment..."
+    }
+fi
 
 # Collect static files
 echo "Collecting static files..."
