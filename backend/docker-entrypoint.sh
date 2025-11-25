@@ -47,10 +47,6 @@ fi
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Initialize plans (one time setup)
-echo "Initializing plans..."
-python init_plans.py || echo "Plans initialization completed or already exists"
-
 # Create superuser (required for admin access)
 echo "Creating superuser..."
 python manage.py shell -c "
@@ -66,6 +62,10 @@ if not User.objects.filter(username=username).exists():
 else:
     print(f'Superuser {username} already exists')
 "
+
+# Initialize plans (after migrations and superuser creation)
+echo "Initializing billing plans..."
+python init_plans.py || echo "Plans initialization completed or already exists"
 
 echo "Starting services with supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
