@@ -901,3 +901,49 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         return AuditLog.objects.filter(user=self.request.user)
+
+
+class HealthCheckView(APIView):
+    """Simple health check endpoint for deployment monitoring"""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Return basic health status"""
+        from django.db import connection
+        from django.core.cache import cache
+        import redis
+        from django.conf import settings
+        
+        health_status = {
+            'status': 'healthy',
+            'timestamp': timezone.now().isoformat(),
+            'services': {}
+        }
+        
+        # Check database connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            health_status['services']['database'] = 'healthy'
+        except Exception as e:
+            health_status['services']['database'] = f'unhealthy: {str(e)}'
+            health_status['status'] = 'degraded'
+        
+        # Check Redis connection
+        try:
+            cache.set('health_check', 'ok', 30)
+            if cache.get('health_check') == 'ok':
+                health_status['services']['redis'] = 'healthy'
+            else:
+                health_status['services']['redis'] = 'unhealthy: cache test failed'
+                health_status['status'] = 'degraded'
+        except Exception as e:
+            health_status['services']['redis'] = f'unhealthy: {str(e)}'
+            health_status['status'] = 'degraded'
+        
+        # Return appropriate status code
+        if health_status['status'] == 'healthy':
+            return Response(health_status, status=status.HTTP_200_OK)
+        else:
+            return Response(health_status, status=status.HTTP_503_SERVICE_UNAVAILABLE)

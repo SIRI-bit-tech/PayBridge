@@ -1,0 +1,101 @@
+services:
+  - type: web
+    name: paybridge-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /api/health/
+    envVars:
+      # Database Configuration
+      - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_0O5PXbdguFfN@ep-mute-bar-adxyyyfn-pooler.c-2.us-east-1.aws.neon.tech/paybridge?sslmode=require&channel_binding=require"
+      
+      # Redis Configuration (Upstash)
+      - key: REDIS_URL
+        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379"
+      
+      # Celery Configuration
+      - key: CELERY_BROKER_URL
+        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379/0?ssl_cert_reqs=CERT_NONE"
+      - key: CELERY_RESULT_BACKEND
+        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379?ssl_cert_reqs=CERT_NONE"
+      
+      # Django Settings
+      - key: DJANGO_SETTINGS_MODULE
+        value: paybridge.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      
+      # CORS Configuration
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://your-frontend-domain.com,http://localhost:3000"
+      
+      # Frontend URL
+      - key: FRONTEND_URL
+        value: "https://your-frontend-domain.com"
+      
+      # Superuser Configuration (Required)
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: "admin"
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: "admin@paybridge.com"
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true
+      
+      # Email Configuration (Update with your values)
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        value: "your-email@gmail.com"
+      - key: EMAIL_HOST_PASSWORD
+        value: "your-app-password"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@paybridge.com"
+      
+      # Payment Provider Keys - Paystack
+      - key: PAYSTACK_PUBLIC_KEY
+        value: "pk_test_your_public_key"
+      - key: PAYSTACK_SECRET_KEY
+        value: "sk_test_your_secret_key"
+      
+      # Payment Provider Keys - Flutterwave
+      - key: FLUTTERWAVE_PUBLIC_KEY
+        value: "FLWPUBK_TEST_your_public_key"
+      - key: FLUTTERWAVE_SECRET_KEY
+        value: "FLWSECK_TEST_your_secret_key"
+      - key: FLUTTERWAVE_SECRET_HASH
+        value: "your_webhook_secret_hash"
+      
+      # Payment Provider Keys - Stripe
+      - key: STRIPE_API_KEY
+        value: "sk_test_your_api_key"
+      - key: STRIPE_WEBHOOK_SECRET
+        value: "whsec_test_your_webhook_secret"
+      
+      # Payment Provider Keys - Mono
+      - key: MONO_API_KEY
+        value: "mono_test_your_api_key"
+      
+      # Payment Provider Keys - Okra
+      - key: OKRA_API_KEY
+        value: "okra_test_your_api_key"
+      
+      # Payment Provider Keys - Chapa
+      - key: CHAPA_API_KEY
+        value: "CHASECK_TEST_your_api_key"
+      
+      # Payment Provider Keys - Lazerpay
+      - key: LAZERPAY_PUBLIC_KEY
+        value: "pk_live_your_public_key"
+      - key: LAZERPAY_SECRET_KEY
+        value: "sk_live_your_secret_key"
+

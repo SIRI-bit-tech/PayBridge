@@ -5,7 +5,8 @@ from .views import (
     UserProfileViewSet, APIKeyViewSet, PaymentProviderViewSet,
     TransactionViewSet,
     KYCViewSet, AnalyticsViewSet, BillingViewSet, AuditLogViewSet,
-    LoginView, RegisterView, PasswordResetRequestView, PasswordResetConfirmView
+    LoginView, RegisterView, PasswordResetRequestView, PasswordResetConfirmView,
+    HealthCheckView
 )
 from .settlement_views import SettlementViewSet
 from .analytics_views import AnalyticsViewSet as SystemAnalyticsViewSet
@@ -67,6 +68,7 @@ webhook_patterns = [
 ]
 
 urlpatterns = [
+    path('health/', HealthCheckView.as_view(), name='health_check'),
     path('', include(router.urls)),
     path('', include(auth_patterns)),
     path('', include(billing_patterns)),
