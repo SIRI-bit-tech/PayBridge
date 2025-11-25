@@ -23,40 +23,9 @@ else
     echo "Database is ready!"
 fi
 
-# Run database migrations with conflict handling
-echo "Running database migrations..."
-
-# Check if billing_plans table exists and handle accordingly
-python manage.py shell -c "
-from django.db import connection
-cursor = connection.cursor()
-try:
-    cursor.execute(\"SELECT 1 FROM billing_plans LIMIT 1;\")
-    print('billing_plans table exists, marking migration as fake')
-    exit(1)
-except:
-    print('billing_plans table does not exist, proceeding with normal migration')
-    exit(0)
-" && BILLING_EXISTS=false || BILLING_EXISTS=true
-
-if [ "$BILLING_EXISTS" = "true" ]; then
-    echo "Billing tables exist, using fake migration strategy..."
-    # Mark the problematic migration as fake
-    python manage.py migrate api 0006 --fake --noinput || true
-    # Run remaining migrations
-    python manage.py migrate --noinput || {
-        echo "Some migrations failed, but continuing with deployment..."
-    }
-else
-    echo "Running normal migrations..."
-    python manage.py migrate --noinput || {
-        echo "Migration failed, trying fake-initial approach..."
-        python manage.py migrate --fake-initial --noinput || true
-        python manage.py migrate --noinput || {
-            echo "Some migrations failed, but continuing with deployment..."
-        }
-    }
-fi
+# Skip migrations entirely - database already exists
+echo "Skipping migrations - using existing database schema..."
+echo "Database schema assumed to be already set up"
 
 # Collect static files
 echo "Collecting static files..."
@@ -64,22 +33,11 @@ python manage.py collectstatic --noinput
 
 # Create superuser (required for admin access)
 echo "Creating superuser..."
-python manage.py shell -c "
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-User = get_user_model()
-username = '${DJANGO_SUPERUSER_USERNAME:-admin}'
-email = '${DJANGO_SUPERUSER_EMAIL:-admin@paybridge.com}'
-password = '${DJANGO_SUPERUSER_PASSWORD:-admin123}'
+export DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-admin}
+export DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@paybridge.com}  
+export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-admin123}
 
-if not User.objects.filter(username=username).exists():
-    user = User.objects.create_superuser(username, email, password)
-    user.last_login = timezone.now()
-    user.save()
-    print(f'Superuser {username} created successfully')
-else:
-    print(f'Superuser {username} already exists')
-"
+python manage.py createsuperuser --noinput || echo "Superuser already exists or creation failed - continuing..."
 
 # Initialize plans (after migrations and superuser creation)
 echo "Initializing billing plans..."
