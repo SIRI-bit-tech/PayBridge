@@ -24,7 +24,6 @@ const nextConfig = {
       },
     ],
   },
-  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md',],
 }
 
-export default withNextra(nextConfig)
+export default nextConfig

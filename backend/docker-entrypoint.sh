@@ -3,31 +3,25 @@ set -e
 
 echo "Starting PayBridge Backend Deployment..."
 
-# Extract database connection details from DATABASE_URL
+# Check if DATABASE_URL is set (for cloud databases like Neon, we skip readiness check)
 if [ -n "$DATABASE_URL" ]; then
-    # Parse DATABASE_URL to extract host, port, user
-    DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
-    DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-    DB_USER=$(echo $DATABASE_URL | sed -n 's/.*\/\/\([^:]*\):.*/\1/p')
-    
-    # Use defaults if extraction fails
-    DB_HOST=${DB_HOST:-localhost}
-    DB_PORT=${DB_PORT:-5432}
-    DB_USER=${DB_USER:-postgres}
+    echo "Using cloud database (DATABASE_URL is set)"
+    echo "Skipping database readiness check for cloud provider..."
 else
-    # Fallback to environment variables or defaults
+    echo "No DATABASE_URL found, checking local database..."
+    # Fallback to environment variables or defaults for local development
     DB_HOST=${DATABASE_HOST:-localhost}
     DB_PORT=${DATABASE_PORT:-5432}
     DB_USER=${DATABASE_USER:-postgres}
+    
+    # Wait for local database to be ready
+    echo "Waiting for database at $DB_HOST:$DB_PORT..."
+    while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
+        echo "Database is unavailable - sleeping"
+        sleep 2
+    done
+    echo "Database is ready!"
 fi
-
-# Wait for database to be ready
-echo "Waiting for database at $DB_HOST:$DB_PORT..."
-while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
-    echo "Database is unavailable - sleeping"
-    sleep 2
-done
-echo "Database is ready!"
 
 # Run database migrations
 echo "Running database migrations..."
