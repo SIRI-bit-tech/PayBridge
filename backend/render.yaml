@@ -47,6 +47,10 @@ services:
       - key: DJANGO_SUPERUSER_PASSWORD
         generateValue: true
       
+      # Encryption Key (Required for production)
+      - key: ENCRYPTION_KEY
+        value: "YNlfrM7PgTeZP1mB079ZltjG_2RTId39MDccGY7Txtk="
+      
       # Email Configuration (Update with your values)
       - key: EMAIL_HOST
         value: "smtp.gmail.com"
