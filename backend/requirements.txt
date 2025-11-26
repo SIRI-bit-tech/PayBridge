@@ -37,3 +37,4 @@ phonenumbers
 
 redis[hiredis]
 aioredis
+python-socketio
