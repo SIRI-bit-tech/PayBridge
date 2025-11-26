@@ -36,9 +36,12 @@ python manage.py collectstatic --noinput
 # Skip superuser creation - causing database constraint issues
 echo "Skipping superuser creation to avoid database conflicts..."
 
-# Test Django setup
-echo "Testing Django configuration..."
-python test_django.py || echo "Django test completed with warnings"
+# Check Django configuration
+echo "Checking Django configuration..."
+python check_django.py || {
+    echo "Django check failed - deployment may have issues"
+    exit 1
+}
 
 echo "Starting services with supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
