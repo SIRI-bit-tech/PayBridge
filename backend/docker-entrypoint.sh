@@ -33,8 +33,21 @@ python simple_migrate.py
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Skip superuser creation - causing database constraint issues
-echo "Skipping superuser creation to avoid database conflicts..."
+# Create superuser if needed
+echo "Creating superuser if needed..."
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+if not User.objects.filter(is_superuser=True).exists():
+    User.objects.create_superuser(
+        username='admin',
+        email='admin@paybridge.com', 
+        password='admin123'
+    )
+    print('✓ Superuser created: admin/admin123')
+else:
+    print('✓ Superuser already exists')
+" || echo "⚠ Superuser creation skipped"
 
 # Check Django configuration
 echo "Checking Django configuration..."

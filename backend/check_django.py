@@ -29,8 +29,14 @@ def main():
         from paybridge.wsgi import application as wsgi_app
         print("✓ WSGI application can be imported")
         
-        # Skip ASGI check for now to avoid socketio issues
-        print("⚠ Skipping ASGI check (WebSocket support disabled)")
+        # Check ASGI application
+        try:
+            from paybridge.asgi import application as asgi_app
+            print("✓ ASGI application can be imported")
+            print("✓ WebSocket support enabled")
+        except Exception as e:
+            print(f"⚠ ASGI check failed: {e}")
+            print("⚠ WebSocket support may be limited")
         
         print("✓ All checks passed - Django should start successfully")
         
