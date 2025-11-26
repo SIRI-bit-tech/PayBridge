@@ -31,6 +31,12 @@ services:
       - key: ALLOWED_HOSTS
         value: "*"
       
+      # Server Configuration
+      - key: PORT
+        value: "8000"
+      - key: HOST
+        value: "0.0.0.0"
+      
       # CORS Configuration
       - key: CORS_ALLOWED_ORIGINS
         value: "https://your-frontend-domain.com,http://localhost:3000"
