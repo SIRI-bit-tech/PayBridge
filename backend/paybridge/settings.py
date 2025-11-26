@@ -230,10 +230,9 @@ SIMPLE_JWT = {
 
 # CORS Settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-]
+# Get CORS origins from environment variable
+CORS_ALLOWED_ORIGINS_ENV = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',')]
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
