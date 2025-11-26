@@ -1,4 +1,4 @@
-# Generated migration for webhook system
+# Fixed migration for webhook system - no model deletions
 
 from django.conf import settings
 from django.db import migrations, models
@@ -15,27 +15,16 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Drop old tables if they exist (safe SQL)
+        # Only drop tables that might actually exist, ignore errors
         migrations.RunSQL(
             sql="""
             DROP TABLE IF EXISTS webhook_events CASCADE;
-            DROP TABLE IF EXISTS webhooks CASCADE;
-            DROP TABLE IF EXISTS subscriptions CASCADE;
-            DROP TABLE IF EXISTS billing_plans CASCADE;
+            DROP TABLE IF EXISTS webhook_subscriptions CASCADE;
+            DROP TABLE IF EXISTS webhook_delivery_logs CASCADE;
+            DROP TABLE IF EXISTS webhook_delivery_metrics CASCADE;
             """,
             reverse_sql="SELECT 1;"
         ),
-        
-        # Remove subscription field from Invoice (references old Subscription model)
-        migrations.RunSQL(
-            sql="ALTER TABLE IF EXISTS invoices DROP COLUMN IF EXISTS subscription_id CASCADE;",
-            reverse_sql="SELECT 1;"
-        ),
-        
-        # Remove old model state (tell Django these models are gone)
-        migrations.DeleteModel(name='Webhook'),
-        migrations.DeleteModel(name='Subscription'),
-        migrations.DeleteModel(name='BillingPlan'),
         
         # Create WebhookEvent model
         migrations.CreateModel(
@@ -133,7 +122,7 @@ class Migration(migrations.Migration):
             },
         ),
         
-        # Add indexes (using final names to match database state)
+        # Add indexes
         migrations.AddIndex(
             model_name='webhookevent',
             index=models.Index(fields=['provider', '-received_at'], name='webhook_eve_provide_3503e3_idx'),

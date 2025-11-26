@@ -23,17 +23,11 @@ else
     echo "Database is ready!"
 fi
 
-# Run migrations with conflict handling
-echo "Running database migrations with conflict handling..."
+# Run migrations with comprehensive error handling
+echo "Running database migrations..."
 
-# Mark problematic migrations as fake if they conflict with existing schema
-python manage.py migrate --fake api 0006 || echo "Migration 0006 handled"
-python manage.py migrate --fake api 0007 || echo "Migration 0007 handled"
-
-# Run remaining migrations
-python manage.py migrate --noinput || {
-    echo "Some migrations failed, but continuing with deployment..."
-}
+# Use our simple migration script that handles all common issues
+python simple_migrate.py
 
 # Collect static files
 echo "Collecting static files..."
