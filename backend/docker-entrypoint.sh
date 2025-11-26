@@ -49,6 +49,10 @@ else:
     print('✓ Superuser already exists')
 " || echo "⚠ Superuser creation skipped"
 
+# Test Redis connection first
+echo "Testing Redis connection..."
+python test_redis_simple.py
+
 # Check Django configuration
 echo "Checking Django configuration..."
 python check_django.py || {

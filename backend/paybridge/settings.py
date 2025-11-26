@@ -159,21 +159,34 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Redis Cache Configuration with SSL support
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
+
+# Configure SSL options for Upstash Redis
+redis_ssl_options = {}
+if REDIS_URL.startswith('rediss://'):
+    # SSL Redis connection (Upstash)
+    redis_ssl_options = {
+        'ssl_cert_reqs': None,
+        'ssl_check_hostname': False,
+        'ssl_ca_certs': None,
+    }
+
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+        'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'CONNECTION_POOL_KWARGS': {
                 'max_connections': 50,
                 'retry_on_timeout': True,
-                'ssl_cert_reqs': None,  # For Upstash Redis SSL
-                'ssl_check_hostname': False,  # For Upstash Redis SSL
+                'socket_connect_timeout': 5,
+                'socket_timeout': 5,
+                **redis_ssl_options,  # Add SSL options if needed
             },
-            'SOCKET_CONNECT_TIMEOUT': 5,
-            'SOCKET_TIMEOUT': 5,
             'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,  # Don't fail if Redis is unavailable
         },
         'KEY_PREFIX': 'paybridge',
         'TIMEOUT': 300,

@@ -11,15 +11,15 @@ services:
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_0O5PXbdguFfN@ep-mute-bar-adxyyyfn-pooler.c-2.us-east-1.aws.neon.tech/paybridge?sslmode=require&channel_binding=require"
       
-      # Redis Configuration (Upstash)
+      # Redis Configuration (Upstash - Updated)
       - key: REDIS_URL
-        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379"
+        value: "rediss://default:AVvzAAIncDJkNDEyMDMwMTQ0MTg0MmVlYmY1NGQ4N2RkM2VhYWRlOXAyMjM1Mzk@still-swine-23539.upstash.io:6379"
       
-      # Celery Configuration
+      # Celery Configuration (Updated)
       - key: CELERY_BROKER_URL
-        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379/0?ssl_cert_reqs=CERT_NONE"
+        value: "rediss://default:AVvzAAIncDJkNDEyMDMwMTQ0MTg0MmVlYmY1NGQ4N2RkM2VhYWRlOXAyMjM1Mzk@still-swine-23539.upstash.io:6379/0?ssl_cert_reqs=CERT_NONE"
       - key: CELERY_RESULT_BACKEND
-        value: "rediss://default:AYsZAAIncDFiZDFhNTNlNDc1MTk0NWVkODI3YTMyZDlkOGYwYzY4ZnAxMzU2MDk@legal-corgi-35609.upstash.io:6379?ssl_cert_reqs=CERT_NONE"
+        value: "rediss://default:AVvzAAIncDJkNDEyMDMwMTQ0MTg0MmVlYmY1NGQ4N2RkM2VhYWRlOXAyMjM1Mzk@still-swine-23539.upstash.io:6379?ssl_cert_reqs=CERT_NONE"
       
       # Django Settings
       - key: DJANGO_SETTINGS_MODULE
