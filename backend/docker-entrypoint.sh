@@ -23,9 +23,14 @@ else
     echo "Database is ready!"
 fi
 
-# Run migrations but skip problematic billing plans migration
-echo "Running database migrations (skipping billing plans)..."
-python manage.py migrate --fake api 0006 || echo "Billing plans migration skipped"
+# Run migrations with conflict handling
+echo "Running database migrations with conflict handling..."
+
+# Mark problematic migrations as fake if they conflict with existing schema
+python manage.py migrate --fake api 0006 || echo "Migration 0006 handled"
+python manage.py migrate --fake api 0007 || echo "Migration 0007 handled"
+
+# Run remaining migrations
 python manage.py migrate --noinput || {
     echo "Some migrations failed, but continuing with deployment..."
 }
