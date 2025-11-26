@@ -39,7 +39,7 @@ services:
       
       # CORS Configuration
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://your-frontend-domain.com,http://localhost:3000"
+        value: "https://pay-bridgev1.vercel.app,http://localhost:3000"
       
       # Frontend URL
       - key: FRONTEND_URL
