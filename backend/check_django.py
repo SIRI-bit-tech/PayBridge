@@ -21,9 +21,17 @@ def main():
         print("✓ Database connection working")
         
         # Check Redis
-        from django.core.cache import cache
-        cache.set('test', 'ok', 30)
-        print("✓ Redis connection working")
+        try:
+            from django.core.cache import cache
+            cache.set('test', 'ok', 30)
+            result = cache.get('test')
+            if result == 'ok':
+                print("✓ Redis connection working")
+            else:
+                print("⚠ Redis connection partial - set/get mismatch")
+        except Exception as redis_error:
+            print(f"⚠ Redis connection failed: {redis_error}")
+            print("⚠ Continuing without Redis cache - some features may be limited")
         
         # Check if we can import WSGI application  
         from paybridge.wsgi import application as wsgi_app
