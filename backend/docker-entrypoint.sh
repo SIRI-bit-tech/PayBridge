@@ -49,6 +49,10 @@ else:
     print('✓ Superuser already exists')
 " || echo "⚠ Superuser creation skipped"
 
+# Debug environment variables
+echo "Debugging environment variables..."
+python debug_env.py
+
 # Test Redis connection first
 echo "Testing Redis connection..."
 python test_redis_simple.py

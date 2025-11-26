@@ -12,6 +12,13 @@ def test_redis_simple():
         from urllib.parse import urlparse
         
         redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+        
+        # Fix common issue with extra '=' at the beginning
+        if redis_url.startswith('='):
+            print(f"⚠️  Found extra '=' in Redis URL, fixing...")
+            redis_url = redis_url[1:]  # Remove the first character
+            os.environ['REDIS_URL'] = redis_url  # Update environment
+        
         print(f"🔍 Testing Redis URL: {redis_url}")
         
         # Parse the URL
