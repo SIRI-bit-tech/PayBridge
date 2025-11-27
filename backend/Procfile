@@ -1,0 +1,4 @@
+release: bash release.sh
+web: daphne -b 0.0.0.0 -p $PORT paybridge.asgi:application
+worker: celery -A paybridge worker --loglevel=info
+beat: celery -A paybridge beat --loglevel=info

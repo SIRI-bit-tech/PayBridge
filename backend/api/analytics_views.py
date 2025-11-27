@@ -16,6 +16,10 @@ class AnalyticsViewSet(viewsets.ViewSet):
     """System analytics and health metrics"""
     permission_classes = [IsAuthenticated]
     
+    def list(self, request):
+        """Default analytics endpoint - returns system overview"""
+        return self.system_health(request)
+    
     @action(detail=False, methods=['get'], url_path='system-health')
     def system_health(self, request):
         """Get system health metrics"""

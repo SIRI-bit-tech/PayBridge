@@ -1,0 +1,51 @@
+{
+  "name": "PayBridge Backend",
+  "description": "PayBridge - Pan-African Payment Gateway Backend",
+  "repository": "https://github.com/SIRI-bit-tech/PayBridge",
+  "logo": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+  "keywords": ["django", "payments", "fintech", "api"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    },
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    },
+    {
+      "plan": "heroku-redis:mini"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": {
+      "generator": "secret"
+    },
+    "DEBUG": {
+      "value": "True"
+    },
+    "ALLOWED_HOSTS": {
+      "value": "*"
+    },
+    "CORS_ALLOWED_ORIGINS": {
+      "value": "https://pay-bridgev1.vercel.app,http://localhost:3000"
+    },
+    "ENCRYPTION_KEY": {
+      "value": "YNlfrM7PgTeZP1mB079ZltjG_2RTId39MDccGY7Txtk="
+    }
+  },
+  "scripts": {
+    "postdeploy": "python manage.py migrate && python manage.py collectstatic --noinput"
+  }
+}

@@ -21,7 +21,14 @@ if not ENCRYPTION_KEY:
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']  # For development only
+# Heroku-specific ALLOWED_HOSTS handling
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+
+# Add Heroku domain if on Heroku
+import os
+if 'DYNO' in os.environ:
+    # Running on Heroku
+    ALLOWED_HOSTS.append('.herokuapp.com')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
